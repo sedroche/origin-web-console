@@ -15,7 +15,8 @@
     bindings: {
       apiObject: '<',
       state: '<',
-      bindings: '<'
+      bindings: '<',
+      mobileClients: '<'
     },
     templateUrl: 'views/overview/_service-instance-row.html'
   });
@@ -32,12 +33,13 @@
     var serviceInstanceFailedMessage = $filter('serviceInstanceFailedMessage');
     var truncate = $filter('truncate');
 
-    _.extend(row, ListRowUtils.ui);
+    _.extend(row, ListRowUtils.ui)
 
     var serviceInstanceDisplayName = $filter('serviceInstanceDisplayName');
 
     row.serviceBindingsVersion = APIService.getPreferredVersion('servicebindings');
     row.serviceInstancesVersion = APIService.getPreferredVersion('serviceinstances');
+    row.isMobileService = _.get(row.apiObject, 'metadata.labels', {}).mobile === 'enabled';
 
     var getServiceClass = function() {
       var serviceClassName = ServiceInstancesService.getServiceClassNameForInstance(row.apiObject);
@@ -61,6 +63,14 @@
       }
     };
 
+    var filterExcluded = function(mobileClients, apiObject) {
+      var serviceId = _.get(apiObject, 'metadata.name', '');
+      return _.filter(mobileClients, function(client) {
+        var excludedServices = _.get(client, 'spec.excludedServices', []);
+        return !_.includes(excludedServices, serviceId);
+      });
+    };
+
     row.$doCheck = function() {
       updateInstanceStatus();
 
@@ -69,11 +79,19 @@
       row.servicePlan = getServicePlan();
       row.displayName = serviceInstanceDisplayName(row.apiObject, row.serviceClass);
       row.isBindable = BindingService.isServiceBindable(row.apiObject, row.serviceClass, row.servicePlan);
+      if (row.isMobileService && row.mobileClients) {
+        row.filteredClients = filterExcluded(row.mobileClients, row.apiObject);
+      }
     };
 
     row.$onChanges = function(changes) {
       if (changes.bindings) {
         row.deleteableBindings = _.reject(row.bindings, 'metadata.deletionTimestamp');
+      }
+
+      if (row.isMobileService && changes.mobileClients) {
+        var clientChanges = _.get(changes, 'mobileClients.currentValue', {})
+        row.filteredClients = filterExcluded(clientChanges, row.apiObject);
       }
     };
 
