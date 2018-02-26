@@ -9,6 +9,8 @@
       'BindingService',
       'ListRowUtils',
       'ServiceInstancesService',
+      'DataService',
+      'NotificationsService',
       ServiceInstanceRow
     ],
     controllerAs: 'row',
@@ -26,14 +28,16 @@
                               AuthorizationService,
                               BindingService,
                               ListRowUtils,
-                              ServiceInstancesService) {
+                              ServiceInstancesService,
+                              DataService,
+                              NotificationsService) {
     var row = this;
     var isBindingFailed = $filter('isBindingFailed');
     var isBindingReady = $filter('isBindingReady');
     var serviceInstanceFailedMessage = $filter('serviceInstanceFailedMessage');
     var truncate = $filter('truncate');
 
-    _.extend(row, ListRowUtils.ui)
+    _.extend(row, ListRowUtils.ui);
 
     var serviceInstanceDisplayName = $filter('serviceInstanceDisplayName');
 
@@ -69,6 +73,32 @@
         var excludedServices = _.get(client, 'spec.excludedServices', []);
         return !_.includes(excludedServices, serviceId);
       });
+    };
+
+    var mobileclientVersion = {
+      group: "mobile.k8s.io",
+      version: "v1alpha1",
+      resource: "mobileclients"
+    };
+
+    row.excludeClient = function(mobileClient) {
+      var excludedServices = _.get(mobileClient, 'spec.excludedServices') || [];
+      excludedServices.push(_.get(row.apiObject, 'metadata.name'));
+      _.set(mobileClient, 'spec.excludedServices', excludedServices);
+      var context = {namespace: _.get(row, 'state.project.metadata.name')};
+      DataService.update(mobileclientVersion, mobileClient.metadata.name, mobileClient, context)
+      .then(function() {
+          NotificationsService.addNotification({
+            type: 'success',
+            message: 'Mobile client ' + _.get(mobileClient, 'spec.name') + ' excluded from ' + _.get(row.apiObject, 'metadata.name')
+          });
+        }).catch(function(err) {
+          NotificationsService.addNotification({
+            type: 'error',
+            message: 'Failed to exclude mobile client ' + _.get(mobileClient, 'spec.name'),
+            details: error.data.message
+          });
+        });
     };
 
     row.$doCheck = function() {
