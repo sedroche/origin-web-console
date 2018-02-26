@@ -30,6 +30,7 @@
                               ListRowUtils,
                               ServiceInstancesService) {
     var row = this;
+
     var isBindingFailed = $filter('isBindingFailed');
     var isBindingReady = $filter('isBindingReady');
     var serviceInstanceFailedMessage = $filter('serviceInstanceFailedMessage');
@@ -43,6 +44,7 @@
 
     row.serviceBindingsVersion = APIService.getPreferredVersion('servicebindings');
     row.serviceInstancesVersion = APIService.getPreferredVersion('serviceinstances');
+    row.isMobileService = $filter('isMobileService');
 
     var getServiceClass = function() {
       var serviceClassName = ServiceInstancesService.getServiceClassNameForInstance(row.apiObject);
@@ -82,6 +84,12 @@
     row.$onChanges = function(changes) {
       if (changes.bindings) {
         row.deleteableBindings = _.reject(row.bindings, 'metadata.deletionTimestamp');
+      }
+      if(row.isMobileService(row.apiObject) && $rootScope.AEROGEAR_MOBILE_ENABLED){
+        var integrations = _.get(getServiceClass(), "spec.externalMetadata.integrations", false);
+        if (integrations){
+          row.integrations = integrations.split(",");
+        }
       }
     };
 

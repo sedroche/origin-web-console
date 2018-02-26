@@ -571,6 +571,16 @@ i();
 };
 }
 
+function ServiceInstanceIntegrations(e, t) {
+var n = this, r = e.getPreferredVersion("clusterserviceclasses");
+t.list(r, {}).then(function(e) {
+n.integrationsData = _.filter(e.by("metadata.name"), function(e) {
+var t = _.get(e, "spec.externalMetadata.serviceName");
+return n.integrations.contains(t);
+});
+});
+}
+
 angular.isUndefined(window.OPENSHIFT_CONSTANTS) && (window.OPENSHIFT_CONSTANTS = {}), angular.extend(window.OPENSHIFT_CONSTANTS, {
 HELP_BASE_URL: "https://docs.openshift.org/latest/",
 HELP: {
@@ -13291,7 +13301,7 @@ f.plan = e, f.parameterSchema = _.get(f.plan, "spec.serviceBindingCreateParamete
 });
 });
 }), f.$onInit = function() {
-f.serviceSelection = {}, f.projectDisplayName = t("displayName")(f.project), f.podPresets = v("pod_presets"), f.parameterData = {}, f.steps = [ c, l, u ], f.hideBack = l.hidden, "ServiceInstance" === f.target.kind ? (f.bindType = "secret-only", f.appToBind = null, f.serviceToBind = f.target, f.podPresets && w()) : (f.bindType = "application", f.appToBind = f.target, P());
+f.serviceSelection = {}, f.projectDisplayName = t("displayName")(f.project), f.podPresets = v("pod_presets"), f.parameterData = f.parameterData || {}, f.steps = [ c, l, u ], f.hideBack = l.hidden, "ServiceInstance" === f.target.kind ? (f.bindType = "secret-only", f.appToBind = null, f.serviceToBind = f.target, f.podPresets && w()) : (f.bindType = "application", f.appToBind = f.target, P());
 }, f.$onChanges = function(e) {
 e.project && !e.project.isFirstChange() && (f.projectDisplayName = t("displayName")(f.project));
 }, f.$onDestroy = function() {
@@ -13303,10 +13313,12 @@ namespace: _.get(e, "metadata.namespace")
 a.bindService(e, t, r, f.parameterData).then(function(e) {
 f.binding = e, f.error = null, p = i.watchObject(a.bindingResource, _.get(f.binding, "metadata.name"), n, function(e) {
 f.binding = e;
-});
+}), f.wizardFinished(e);
 }, function(e) {
 f.error = e;
 });
+}, f.wizardFinished = function(e) {
+_.isFunction(f.onFinish) && f.onFinish(e);
 }, f.closeWizard = function() {
 _.isFunction(f.onClose) && f.onClose();
 };
@@ -13315,7 +13327,9 @@ controllerAs: "ctrl",
 bindings: {
 target: "<",
 project: "<",
-onClose: "<"
+onClose: "<",
+onFinish: "<",
+parameterData: "<"
 },
 templateUrl: "views/directives/bind-service.html"
 });
@@ -13905,6 +13919,141 @@ state: "<"
 },
 templateUrl: "views/overview/_mobile-client-row.html"
 });
+}(), angular.module("openshiftConsole").component("serviceInstanceIntegrations", {
+controller: [ "APIService", "DataService", ServiceInstanceIntegrations ],
+controllerAs: "$ctrl",
+bindings: {
+integrations: "<",
+consumerService: "<"
+},
+templateUrl: "views/directives/service-instance-integrations.html"
+}), function() {
+angular.module("openshiftConsole").component("serviceIntegration", {
+controller: [ "$filter", "APIService", "AuthorizationService", "BindingService", "DataService", "NotificationsService", function(e, t, n, r, a, o) {
+var i = this, s = t.getPreferredVersion("deployments"), c = t.getPreferredVersion("servicebindings"), l = t.getPreferredVersion("serviceinstances"), u = {
+group: "settings.k8s.io",
+version: "v1alpha1",
+resource: "podpresets"
+}, d = e("isServiceInstanceReady"), m = e("isBindingReady"), p = i.integration.spec.externalMetadata.serviceName;
+i.$onInit = function() {
+var e = {
+namespace: i.consumerService.metadata.namespace
+};
+a.watch(u, e, function(e) {
+var t = e.by("metadata.name");
+i.podPreset = _.filter(t, function(e) {
+return e.metadata.name === _.get(i.consumerService, "metadata.name") + "-" + _.get(i.serviceInstance, "metadata.name");
+}).pop();
+}), a.watch(c, e, function(e) {
+var t = e.by("metadata.name");
+i.binding = _.filter(t, function(e) {
+var t = _.get(e, "metadata.annotations.provider", "provider_not_found"), n = _.get(e, "metadata.annotations.consumer", "consumer_not_found"), r = _.get(i, "consumerService.metadata.labels.serviceName", "consumer_name_not_found");
+return t === p && n === r;
+}).pop();
+}), a.watch(l, e, function(e) {
+var t = e.by("metadata.name");
+i.serviceInstance = _.filter(t, function(e) {
+return _.get(e, "metadata.labels.serviceName") === p && d(e);
+}).pop();
+});
+};
+var f = function(e, t, n) {
+var r = _.get(e, "metadata.name"), a = _.get(t, "metadata.name"), o = {
+apiVersion: "settings.k8s.io/v1alpha1",
+kind: "PodPreset",
+metadata: {
+name: r + "-" + a,
+labels: {
+group: "mobile",
+service: a
+}
+},
+spec: {
+selector: {
+matchLabels: {
+run: r
+}
+},
+volumeMounts: [ {
+mountPath: "/etc/secrets/" + a,
+readOnly: !0,
+name: a
+} ],
+volumes: [ {
+name: a,
+secret: {
+secretName: _.get(n, "spec.secretName")
+}
+} ]
+}
+};
+return o.spec.selector.matchLabels[a] = "enabled", o;
+};
+i.integrationPanelVisible = !1, i.closeIntegrationPanel = function() {
+i.integrationPanelVisible = !1;
+}, i.openIntegrationPanel = function() {
+i.parameterData = {
+service: _.get(i.consumerService, "metadata.labels.serviceName")
+}, i.integrationPanelVisible = !0;
+}, i.onBind = function(e) {
+var t = {
+namespace: _.get(i.consumerService, "metadata.namespace")
+}, n = f(i.consumerService, i.serviceInstance, e), r = {
+group: "settings.k8s.io",
+resource: "podpresets",
+version: "v1alpha1"
+}, l = a.watchObject(c, _.get(e, "metadata.name"), t, function(e) {
+m(e) && (a.unwatch(l), o.addNotification({
+type: "success",
+message: "Binding has been set in " + _.get(i, "consumerService.metadata.labels.serviceName") + " Redeployed " + _.get(i, "consumerService.metadata.labels.serviceName")
+}), _.set(e, "metadata.annotations.consumer", i.consumerService.metadata.labels.serviceName), _.set(e, "metadata.annotations.provider", p), a.update(c, e.metadata.name, e, t).then(function() {
+return a.get(s, _.get(i, "consumerService.metadata.labels.serviceName"), t, {
+errorNotification: !1
+});
+}).then(function(e) {
+return e.spec.template.metadata.labels[_.get(i.serviceInstance, "metadata.labels.serviceName")] = "enabled", a.update(s, _.get(i, "consumerService.metadata.labels.serviceName"), e, t);
+}).catch(function(e) {
+o.addNotification({
+type: "error",
+message: "Failed to integrate service binding",
+details: e.data.message
+});
+}));
+});
+a.create(r, null, n, t).catch(function(e) {
+o.addNotification({
+type: "error",
+message: "Failed to create pod preset",
+details: e.data.message
+});
+});
+}, i.getState = function() {
+return i.podPreset && !i.binding ? 2 : i.podPreset && i.binding ? 1 : i.binding ? m(i.binding) ? 1 : 2 : i.serviceInstance ? 0 : -1;
+}, i.deletePodPreset = function() {
+var e = {
+namespace: i.consumerService.metadata.namespace
+}, t = {
+propagationPolicy: null
+};
+a.delete(u, i.podPreset.metadata.name, e, t).then(function() {
+return a.get(s, _.get(i, "consumerService.metadata.labels.serviceName"), e);
+}).then(function(t) {
+return delete t.spec.template.metadata.labels[p], a.update(s, _.get(i, "consumerService.metadata.labels.serviceName"), t, e);
+}).catch(function(e) {
+o.addNotification({
+type: "error",
+message: "error removing integration",
+details: e.data.message
+});
+});
+};
+} ],
+bindings: {
+integration: "<",
+consumerService: "<?"
+},
+templateUrl: "views/directives/_service-integration.html"
+});
 }(), function() {
 angular.module("openshiftConsole").component("buildCounts", {
 controller: [ "$scope", "BuildsService", function(e, t) {
@@ -14236,39 +14385,42 @@ templateUrl: "views/overview/_list-row.html"
 });
 }(), function() {
 angular.module("openshiftConsole").component("serviceInstanceRow", {
-controller: [ "$filter", "APIService", "AuthorizationService", "BindingService", "ListRowUtils", "ServiceInstancesService", function(e, t, n, r, a, o) {
-var i = this, s = e("isBindingFailed"), c = e("isBindingReady"), l = e("serviceInstanceFailedMessage"), u = e("truncate");
-_.extend(i, a.ui);
-var d = e("serviceInstanceDisplayName");
-i.serviceBindingsVersion = t.getPreferredVersion("servicebindings"), i.serviceInstancesVersion = t.getPreferredVersion("serviceinstances");
-var m = function() {
-var e = o.getServiceClassNameForInstance(i.apiObject);
-return _.get(i, [ "state", "serviceClasses", e ]);
-}, p = function() {
-var e = o.getServicePlanNameForInstance(i.apiObject);
-return _.get(i, [ "state", "servicePlans", e ]);
+controller: [ "$filter", "$rootScope", "APIService", "AuthorizationService", "BindingService", "ListRowUtils", "ServiceInstancesService", function(e, t, n, r, a, o, i) {
+var s = this, c = e("isBindingFailed"), l = e("isBindingReady"), u = e("serviceInstanceFailedMessage"), d = e("truncate");
+_.extend(s, o.ui);
+var m = e("serviceInstanceDisplayName");
+s.serviceBindingsVersion = n.getPreferredVersion("servicebindings"), s.serviceInstancesVersion = n.getPreferredVersion("serviceinstances"), s.isMobileService = e("isMobileService");
+var p = function() {
+var e = i.getServiceClassNameForInstance(s.apiObject);
+return _.get(s, [ "state", "serviceClasses", e ]);
 }, f = function() {
-_.get(i.apiObject, "metadata.deletionTimestamp") ? i.instanceStatus = "deleted" : s(i.apiObject) ? i.instanceStatus = "failed" : c(i.apiObject) ? i.instanceStatus = "ready" : i.instanceStatus = "pending";
+var e = i.getServicePlanNameForInstance(s.apiObject);
+return _.get(s, [ "state", "servicePlans", e ]);
+}, g = function() {
+_.get(s.apiObject, "metadata.deletionTimestamp") ? s.instanceStatus = "deleted" : c(s.apiObject) ? s.instanceStatus = "failed" : l(s.apiObject) ? s.instanceStatus = "ready" : s.instanceStatus = "pending";
 };
-i.$doCheck = function() {
-f(), i.notifications = a.getNotifications(i.apiObject, i.state), i.serviceClass = m(), i.servicePlan = p(), i.displayName = d(i.apiObject, i.serviceClass), i.isBindable = r.isServiceBindable(i.apiObject, i.serviceClass, i.servicePlan);
-}, i.$onChanges = function(e) {
-e.bindings && (i.deleteableBindings = _.reject(i.bindings, "metadata.deletionTimestamp"));
-}, i.getSecretForBinding = function(e) {
-return e && _.get(i, [ "state", "secrets", e.spec.secretName ]);
-}, i.actionsDropdownVisible = function() {
-return !(_.get(i.apiObject, "metadata.deletionTimestamp") || (!i.isBindable || !n.canI(i.serviceBindingsVersion, "create")) && (_.isEmpty(i.deleteableBindings) || !n.canI(i.serviceBindingsVersion, "delete")) && !n.canI(i.serviceInstancesVersion, "delete"));
-}, i.closeOverlayPanel = function() {
-_.set(i, "overlay.panelVisible", !1);
-}, i.showOverlayPanel = function(e, t) {
-_.set(i, "overlay.panelVisible", !0), _.set(i, "overlay.panelName", e), _.set(i, "overlay.state", t);
-}, i.getFailedTooltipText = function() {
-var e = l(i.apiObject);
+s.$doCheck = function() {
+g(), s.notifications = o.getNotifications(s.apiObject, s.state), s.serviceClass = p(), s.servicePlan = f(), s.displayName = m(s.apiObject, s.serviceClass), s.isBindable = a.isServiceBindable(s.apiObject, s.serviceClass, s.servicePlan);
+}, s.$onChanges = function(e) {
+if (e.bindings && (s.deleteableBindings = _.reject(s.bindings, "metadata.deletionTimestamp")), s.isMobileService(s.apiObject) && t.AEROGEAR_MOBILE_ENABLED) {
+var n = _.get(p(), "spec.externalMetadata.integrations", !1);
+n && (s.integrations = n.split(","));
+}
+}, s.getSecretForBinding = function(e) {
+return e && _.get(s, [ "state", "secrets", e.spec.secretName ]);
+}, s.actionsDropdownVisible = function() {
+return !(_.get(s.apiObject, "metadata.deletionTimestamp") || (!s.isBindable || !r.canI(s.serviceBindingsVersion, "create")) && (_.isEmpty(s.deleteableBindings) || !r.canI(s.serviceBindingsVersion, "delete")) && !r.canI(s.serviceInstancesVersion, "delete"));
+}, s.closeOverlayPanel = function() {
+_.set(s, "overlay.panelVisible", !1);
+}, s.showOverlayPanel = function(e, t) {
+_.set(s, "overlay.panelVisible", !0), _.set(s, "overlay.panelName", e), _.set(s, "overlay.state", t);
+}, s.getFailedTooltipText = function() {
+var e = u(s.apiObject);
 if (!e) return "";
-var t = u(e, 128);
+var t = d(e, 128);
 return e.length !== t.length && (t += "..."), t;
-}, i.deprovision = function() {
-o.deprovision(i.apiObject, i.deleteableBindings);
+}, s.deprovision = function() {
+i.deprovision(s.apiObject, s.deleteableBindings);
 };
 } ],
 controllerAs: "row",
@@ -16319,7 +16471,11 @@ return window.encodeURIComponent;
 return function(t) {
 return _.get(e, [ "ENABLE_TECH_PREVIEW_FEATURE", t ], !1);
 };
-} ]), angular.module("openshiftConsole").factory("logLinks", [ "$anchorScroll", "$document", "$location", "$window", function(e, t, n, r) {
+} ]), angular.module("openshiftConsole").filter("isMobileService", function() {
+return function(e) {
+return "enabled" === _.get(e, "metadata.labels", {}).mobile;
+};
+}), angular.module("openshiftConsole").factory("logLinks", [ "$anchorScroll", "$document", "$location", "$window", function(e, t, n, r) {
 var a = _.template([ "/#/discover?", "_g=(", "time:(", "from:now-1w,", "mode:relative,", "to:now", ")", ")", "&_a=(", "columns:!(kubernetes.container_name,message),", "index:'<%= index %>',", "query:(", "query_string:(", "analyze_wildcard:!t,", 'query:\'kubernetes.pod_name:"<%= podname %>" AND kubernetes.namespace_name:"<%= namespace %>"\'', ")", "),", "sort:!('@timestamp',desc)", ")", "#console_container_name=<%= containername %>", "&console_back_url=<%= backlink %>" ].join(""));
 return {
 scrollTop: function(e) {

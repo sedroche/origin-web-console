@@ -5687,6 +5687,31 @@ angular.module('openshiftConsoleTemplates', []).run(['$templateCache', function(
   );
 
 
+  $templateCache.put('views/directives/_service-integration.html',
+    "<div class=\"service-integration pull-left\" ng-if=\"$ctrl.integration\">\n" +
+    "<div ng-class=\"{'active': $ctrl.getState() == 1,\n" +
+    "                              'inactive': $ctrl.getState() == 0,\n" +
+    "                              'unknown': $ctrl.getState() == -1}\" class=\"integration\">\n" +
+    "<img class=\"image-icon pull-left\" ng-src=\"{{ $ctrl.integration.spec.externalMetadata.imageUrl }}\"/>\n" +
+    "<div class=\"description pull-left\">\n" +
+    "<h4 class=\"integration-name\">{{$ctrl.integration.spec.externalMetadata.displayName}}</h4>\n" +
+    "<span class=\"integration-error\" ng-if=\"$ctrl.getState() == 2\"><span class=\"spinner spinner-xs spinner-inline\" aria-hidden=\"true\"></span></span>\n" +
+    "<delete-link class=\"inline-delete\" ng-if=\"$ctrl.getState() == 1\" kind=\"servicebinding\" group=\"servicecatalog.k8s.io\" button-only=\"true\" stay-on-current-page=\"true\" resource-name=\"{{$ctrl.binding.metadata.name}}\" project-name=\"{{$ctrl.binding.metadata.namespace}}\" success=\"$ctrl.deletePodPreset\">\n" +
+    "</delete-link>\n" +
+    "<span class=\"pficon pficon-add-circle-o\" ng-if=\"$ctrl.getState() == 0\" ng-click=\"$ctrl.openIntegrationPanel()\"></span>\n" +
+    "<div class=\"id\" ng-if=\"$ctrl.getState() == 2\">status: Pending</div>\n" +
+    "<div class=\"id\" ng-if=\"$ctrl.getState() == 1\">ID: {{ $ctrl.binding.metadata.name }}</div>\n" +
+    "<div class=\"id\" ng-if=\"$ctrl.getState() == 0\">No {{$ctrl.integrationData.name}} integration found.</div>\n" +
+    "<div class=\"id\" ng-if=\"$ctrl.getState() == -1\">Provision {{$ctrl.integrationData.name}} to enable integration.</div>\n" +
+    "</div>\n" +
+    "</div>\n" +
+    "</div>\n" +
+    "<overlay-panel show-panel=\"$ctrl.integrationPanelVisible\" handle-close=\"$ctrl.closeIntegrationPanel\">\n" +
+    "<bind-service target=\"$ctrl.serviceInstance\" project=\"$ctrl.project\" on-close=\"$ctrl.closeIntegrationPanel\" on-finish=\"$ctrl.onBind\" parameter-data=\"$ctrl.parameterData\"></bind-service>\n" +
+    "</overlay-panel>"
+  );
+
+
   $templateCache.put('views/directives/_status-icon.html',
     "<span ng-switch=\"status\" class=\"hide-ng-leave status-icon\">\n" +
     "<span ng-switch-when=\"Cancelled\" class=\"fa fa-ban text-muted\" aria-hidden=\"true\"></span>\n" +
@@ -9338,6 +9363,15 @@ angular.module('openshiftConsoleTemplates', []).run(['$templateCache', function(
   );
 
 
+  $templateCache.put('views/directives/service-instance-integrations.html',
+    "<div ng-if=\"($ctrl.integrationsData | size)\" class=\"row service-integrations\">\n" +
+    "<div class=\"component-label section-label\">Integrations</div>\n" +
+    "<service-integration ng-repeat=\"integration in $ctrl.integrationsData\" integration=\"integration\" consumer-service=\"$ctrl.consumerService\">\n" +
+    "</service-integration>\n" +
+    "</div>"
+  );
+
+
   $templateCache.put('views/directives/traffic-table.html',
     " <table class=\"table table-bordered table-mobile\">\n" +
     "<thead>\n" +
@@ -12928,10 +12962,14 @@ angular.module('openshiftConsoleTemplates', []).run(['$templateCache', function(
     "</div>\n" +
     "</div>\n" +
     "<div class=\"expanded-section\">\n" +
-    "<div ng-if=\"row.isBindable || (row.bindings | size)\">\n" +
+    "<div ng-if=\"(row.isBindable || (row.bindings | size))\">\n" +
     "<div class=\"component-label section-label\">Bindings</div>\n" +
     "<service-instance-bindings is-overview=\"true\" project=\"row.state.project\" bindings=\"row.bindings\" service-instance=\"row.apiObject\" service-class=\"row.serviceClass\" service-plan=\"row.servicePlan\">\n" +
     "</service-instance-bindings>\n" +
+    "</div>\n" +
+    "<div ng-if=\"row.integrations | size\">\n" +
+    "<service-instance-integrations ng-if=\"row.isMobileService && row.instanceStatus === 'ready'\" is-overview=\"true\" integrations=\"row.integrations\" consumer-service=\"row.apiObject\">\n" +
+    "</service-instance-integrations>\n" +
     "</div>\n" +
     "</div>\n" +
     "</div>\n" +
