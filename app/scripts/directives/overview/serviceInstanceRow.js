@@ -7,10 +7,10 @@
       'APIService',
       'AuthorizationService',
       'BindingService',
-      'ListRowUtils',
-      'ServiceInstancesService',
       'DataService',
+      'ListRowUtils',
       'NotificationsService',
+      'ServiceInstancesService',
       ServiceInstanceRow
     ],
     controllerAs: 'row',
@@ -27,10 +27,10 @@
                               APIService,
                               AuthorizationService,
                               BindingService,
-                              ListRowUtils,
-                              ServiceInstancesService,
                               DataService,
-                              NotificationsService) {
+                              ListRowUtils,
+                              NotificationsService,
+                              ServiceInstancesService) {
     var row = this;
     var isBindingFailed = $filter('isBindingFailed');
     var isBindingReady = $filter('isBindingReady');
