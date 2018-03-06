@@ -3,9 +3,9 @@
 (function() {
   angular.module('openshiftConsole').component('mobileServiceClients', {
     controller: [
-      'NotificationsService',
       'MobileClientsService',
-      MobileServiceClients
+      'NotificationsService',
+      MobileServiceClientsCtrl
     ],
     bindings: {
       project: '<',
@@ -15,13 +15,13 @@
     templateUrl: 'views/directives/mobile-service-clients.html'
   });
 
-  function MobileServiceClients(
-                       NotificationsService,
-                       MobileClientsService) {
+  function MobileServiceClientsCtrl(
+                       MobileClientsService,
+                       NotificationsService) {
     var ctrl = this;
 
     ctrl.$doCheck = function() {
-      ctrl.filteredClients = MobileClientsService.filterNotExcluded(ctrl.mobileClients, ctrl.serviceInstance);
+      ctrl.filteredClients = MobileClientsService.filterNotExcluded(ctrl.serviceInstance, ctrl.mobileClients);
     };
 
     ctrl.excludeClient = function(mobileClient) {
@@ -51,8 +51,7 @@
     };
 
     ctrl.canAddMobileClient = function() {
-      return !MobileClientsService.filterExcluded(_.get(ctrl.serviceInstance, 'metadata.name'),
-                                                   ctrl.mobileClients).length;
+      return !MobileClientsService.filterExcluded(ctrl.serviceInstance, ctrl.mobileClients).length;
     };
   }
 })();

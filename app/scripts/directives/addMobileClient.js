@@ -3,33 +3,33 @@
 (function() {
   angular.module('openshiftConsole').component('addMobileClient', {
     controller: [
-      'NotificationsService',
       'MobileClientsService',
-      AddMobileClient
+      'NotificationsService',
+      AddMobileClientCtrl
     ],
     controllerAs: 'ctrl',
     bindings: {
       onClose: '<',
       project: '<',
-      serviceName: '<',
+      serviceInstance: '<',
       mobileClients: '<'
     },
     templateUrl: 'views/directives/add-mobile-client.html'
   });
 
-  function AddMobileClient(
-                       NotificationsService,
-                       MobileClientsService) {
+  function AddMobileClientCtrl(
+                       MobileClientsService,
+                       NotificationsService) {
     var ctrl = this;
     ctrl.context = {namespace: ctrl.project.metadata.name};
 
     ctrl.$onInit = function() {
-      ctrl.clientsWhereExcluded = MobileClientsService.filterExcluded(ctrl.serviceName, ctrl.mobileClients);
+      ctrl.clientsWhereExcluded = MobileClientsService.filterExcluded(ctrl.serviceInstance, ctrl.mobileClients);
     };
 
 
     ctrl.addMobileClient = function(mobileClient) {
-      MobileClientsService.removeFromExcluded(mobileClient, ctrl.serviceName, ctrl.context)
+      MobileClientsService.removeFromExcluded(mobileClient, ctrl.serviceInstance, ctrl.context)
         .then(function() {
           NotificationsService.addNotification({
             type: "success",

@@ -39,7 +39,6 @@
 
     row.serviceBindingsVersion = APIService.getPreferredVersion('servicebindings');
     row.serviceInstancesVersion = APIService.getPreferredVersion('serviceinstances');
-    row.isMobileService = _.get(row.apiObject, 'metadata.labels', {}).mobile === 'enabled';
 
     var getServiceClass = function() {
       var serviceClassName = ServiceInstancesService.getServiceClassNameForInstance(row.apiObject);
@@ -71,6 +70,7 @@
       row.servicePlan = getServicePlan();
       row.displayName = serviceInstanceDisplayName(row.apiObject, row.serviceClass);
       row.isBindable = BindingService.isServiceBindable(row.apiObject, row.serviceClass, row.servicePlan);
+      row.isMobileService = _.get(row.apiObject, 'metadata.labels', {}).mobile === 'enabled';
     };
 
     row.$onChanges = function(changes) {

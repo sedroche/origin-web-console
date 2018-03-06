@@ -23,7 +23,7 @@
   <overlay-panel show-panel="$ctrl.overlay.panelVisible" handle-close="$ctrl.closeOverlayPanel">
     <div ng-if="$ctrl.overlay.panelName === 'addMobileClient'">
       <add-mobile-client
-        service-name="$ctrl.serviceInstance.metadata.name"
+        service-instance="$ctrl.serviceInstance"
         project="$ctrl.project"
         on-close="$ctrl.closeOverlayPanel"
         mobile-clients="$ctrl.mobileClients"

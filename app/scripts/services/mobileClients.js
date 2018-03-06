@@ -21,22 +21,24 @@ angular.module("openshiftConsole")
         });
     };
 
-
-    var filterExcluded = function(serviceName, mobileClients) {
+    var filterExcluded = function(serviceInstance, mobileClients) {
+      var serviceName = _.get(serviceInstance, 'metadata.name', '');
       return _.filter(mobileClients, function(client) {
-        return _.includes(client.spec.excludedServices, serviceName);
+        var excludedServices = _.get(client, 'spec.excludedServices') || [];
+        return _.includes(excludedServices, serviceName);
       });
     };
 
-    var filterNotExcluded = function(mobileClients, apiObject) {
-      var serviceId = _.get(apiObject, 'metadata.name', '');
+    var filterNotExcluded = function(serviceInstance, mobileClients) {
+      var serviceName = _.get(serviceInstance, 'metadata.name', '');
       return _.filter(mobileClients, function(client) {
-        var excludedServices = _.get(client, 'spec.excludedServices', []);
-        return !_.includes(excludedServices, serviceId);
+        var excludedServices = _.get(client, 'spec.excludedServices') || [];
+        return !_.includes(excludedServices, serviceName);
       });
     };
 
-    var removeFromExcluded = function(mobileClient, serviceName, context) {
+    var removeFromExcluded = function(mobileClient, serviceInstance, context) {
+      var serviceName = _.get(serviceInstance, 'metadata.name', '');
       _.remove(mobileClient.spec.excludedServices, function(service) {
         return service === serviceName;
       });
