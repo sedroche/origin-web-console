@@ -3,6 +3,7 @@
 angular.module('openshiftConsole')
   .controller('ServiceInstanceController', function ($scope,
                                                      $filter,
+                                                     $rootScope,
                                                      $routeParams,
                                                      APIService,
                                                      BindingService,
@@ -10,6 +11,7 @@ angular.module('openshiftConsole')
                                                      Catalog,
                                                      DataService,
                                                      Logger,
+                                                     MobileClientsService,
                                                      ProjectsService,
                                                      SecretsService,
                                                      ServiceInstancesService) {
@@ -19,6 +21,7 @@ angular.module('openshiftConsole')
     $scope.serviceClass = null;
     $scope.serviceClasses = null;
     $scope.editDialogShown = false;
+    $scope.isMobileEnabled = $rootScope.AEROGEAR_MOBILE_ENABLED;
 
     $scope.breadcrumbs = [
       {
@@ -185,6 +188,7 @@ angular.module('openshiftConsole')
     var serviceResolved = function(serviceInstance, action) {
       $scope.loaded = true;
       $scope.serviceInstance = serviceInstance;
+      $scope.isMobileService = $filter('isMobileService')(serviceInstance);
 
       if (action === "DELETED") {
         $scope.alerts["deleted"] = {
@@ -214,6 +218,17 @@ angular.module('openshiftConsole')
               var allBindings = bindingsData.by('metadata.name');
               $scope.bindings = BindingService.getBindingsForResource(allBindings, serviceInstance);
             }));
+
+            if ($scope.isMobileEnabled) {
+              $scope.$watch('isMobileService', function() {
+                if ($scope.isMobileService) {
+                  watches.push(MobileClientsService.watch(context, function(clients) {
+                    $scope.mobileClients = clients.by("metadata.name");
+                    $scope.hasMobileClients = !_.isEmpty($scope.mobileClients);
+                  }));
+                }
+              });
+            }
           }, function(error) {
             $scope.loaded = true;
             $scope.alerts["load"] = {
