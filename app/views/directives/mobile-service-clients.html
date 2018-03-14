@@ -1,0 +1,30 @@
+<div class="row mobile-clients">
+  <div class="col-sm-6">
+    <div class="client-title component-label section-label">Mobile Clients</div>
+    <div ng-repeat="mobileClient in $ctrl.filteredClients" class="col-sm-12 col-md-6 mobile-client">
+      <span class="fa-2x {{mobileClient.metadata.annotations.icon}} client-icon"></span>
+      <div class="client-details">
+        <a ng-href="{{mobileClient | navigateResourceURL}}">{{mobileClient.spec.name}}</a>
+        <span class="fa fa-trash-o action-button exclude" ng-click="$ctrl.excludeClient(mobileClient)"></span>
+        <div class="client-type">{{mobileClient.spec.appIdentifier}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xs-12 col-sm-6">
+    <button ng-disabled="$ctrl.canAddMobileClient()" class="btn btn-default btn-lg pull-right"
+            ng-click="$ctrl.showOverlayPanel('addMobileClient', {target: $ctrl.serviceInstance})">Add Client
+    </button>
+  </div>
+
+  <overlay-panel show-panel="$ctrl.overlay.panelVisible" handle-close="$ctrl.closeOverlayPanel">
+    <div ng-if="$ctrl.overlay.panelName === 'addMobileClient'">
+      <add-mobile-client
+        service-instance="$ctrl.serviceInstance"
+        project="$ctrl.project"
+        on-close="$ctrl.closeOverlayPanel"
+        mobile-clients="$ctrl.mobileClients"
+      ></add-mobile-client>
+    </div>
+  </overlay-panel>
+</div>

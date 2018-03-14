@@ -1,0 +1,41 @@
+.mobile-clients {
+  .client-title {
+    border-bottom: none;
+  }
+
+  .mobile-client {
+    height: 60px;
+    margin-bottom: 1em;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    .client-icon {
+     vertical-align: bottom;
+     line-height: 42px;
+    }
+
+    .client-details {
+      display: inline-block;
+
+      .client-type {
+        .text-muted();
+        padding-left: 10px;
+        font-size: 11px;
+        line-height: 11px;
+      }
+    }
+
+    a {
+      padding-left: 10px;
+      vertical-align: middle;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .exclude {
+      padding-left: 5px;
+      vertical-align: middle;
+    }
+  }
+}
