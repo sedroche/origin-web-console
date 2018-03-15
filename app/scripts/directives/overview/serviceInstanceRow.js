@@ -4,6 +4,7 @@
   angular.module('openshiftConsole').component('serviceInstanceRow', {
     controller: [
       '$filter',
+      '$rootScope',
       'APIService',
       'AuthorizationService',
       'BindingService',
@@ -22,6 +23,7 @@
   });
 
   function ServiceInstanceRow($filter,
+                              $rootScope,
                               APIService,
                               AuthorizationService,
                               BindingService,
@@ -32,6 +34,8 @@
     var isBindingReady = $filter('isBindingReady');
     var serviceInstanceFailedMessage = $filter('serviceInstanceFailedMessage');
     var truncate = $filter('truncate');
+
+    row.isMobileEnabled = $rootScope.AEROGEAR_MOBILE_ENABLED;
 
     _.extend(row, ListRowUtils.ui);
 
@@ -70,7 +74,9 @@
       row.servicePlan = getServicePlan();
       row.displayName = serviceInstanceDisplayName(row.apiObject, row.serviceClass);
       row.isBindable = BindingService.isServiceBindable(row.apiObject, row.serviceClass, row.servicePlan);
-      row.isMobileService = _.get(row.apiObject, 'metadata.labels', {}).mobile === 'enabled';
+      if (row.isMobileEnabled) {
+        row.hasMobileClients = !_.isEmpty(row.mobileClients);
+      }
     };
 
     row.$onChanges = function(changes) {

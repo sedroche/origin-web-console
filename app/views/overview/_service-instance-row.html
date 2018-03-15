@@ -154,10 +154,12 @@
               </truncate-long-text></p>
           </div>
         </div>
-        <mobile-service-clients ng-if="row.isMobileService && row.instanceStatus === 'ready'"
-        mobile-clients="row.mobileClients"
-        service-instance="row.apiObject"
-        project="row.state.project"></mobile-service-clients>
+        <div ng-if="row.isMobileEnabled && row.hasMobileClients && row.apiObject | isMobileService">
+          <mobile-service-clients ng-if="row.apiObject | isServiceInstanceReady"
+            mobile-clients="row.mobileClients"
+            service-instance="row.apiObject"
+            project="row.state.project"></mobile-service-clients>
+        </div>
         <div class="row">
           <div class="col-sm-12">
             <div ng-if="row.serviceClass.spec.externalMetadata.documentationUrl || row.serviceClass.spec.externalMetadata.supportUrl">

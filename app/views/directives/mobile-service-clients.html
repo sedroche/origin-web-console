@@ -7,9 +7,9 @@
         <a ng-href="{{mobileClient | navigateResourceURL}}">{{mobileClient.spec.name}}</a>
         <div class="client-type">{{mobileClient.spec.appIdentifier}}</div>
       </div>
-      <div class="exclude" ng-click="$ctrl.excludeClient(mobileClient)">
-        <span class="pficon-error-circle-o"></span>
-        <span>Exclude Client</span>
+      <div class="exclude">
+        <span class="pficon-error-circle-o" ng-click="$ctrl.excludeClient(mobileClient)"></span>
+        <span ng-click="$ctrl.excludeClient(mobileClient)">Exclude Client</span>
       </div>
     </div>
   </div>
