@@ -38,6 +38,10 @@
   <div class="list-pf-expansion collapse" ng-if="row.expanded" ng-class="{ in: row.expanded }">
     <div class="list-pf-container">
       <div class="expanded-section">
+        <mobile-client-service-associations
+          mobile-client="row.apiObject"
+          project="row.projectName"
+          service-classes=row.state.serviceClasses></mobile-client-service-associations>
         <div class="empty-state-message text-center">
           <p>Add a mobile service to your project. Or connect to external service.</p>
           <div class="empty-state-message-main-action">
