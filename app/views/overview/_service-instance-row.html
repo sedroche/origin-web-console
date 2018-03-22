@@ -163,10 +163,10 @@
           </div>
         </div>
         <div ng-if="row.isMobileEnabled && row.hasMobileClients && (row.apiObject | isMobileService)">
-          <mobile-service-clients ng-if="row.apiObject | isServiceInstanceReady"
+          <mobile-service-clients-associations ng-if="row.apiObject | isServiceInstanceReady"
             mobile-clients="row.mobileClients"
             service-instance="row.apiObject"
-            project="row.state.project"></mobile-service-clients>
+            project="row.state.project"></mobile-service-clients-associations>
         </div>
       </div>
       <div class="expanded-section">

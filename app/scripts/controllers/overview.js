@@ -1337,17 +1337,17 @@ function OverviewController($scope,
       Logger.log("deploymentconfigs (subscribe)", overview.deploymentConfigs);
     }));
 
-    watches.push(DataService.watch(replicaSetsVersion, context, function(replicaSetData) {
-      overview.replicaSets = replicaSetData.by('metadata.name');
-      groupReplicaSets();
-      updateServicesForObjects(overview.vanillaReplicaSets);
-      updateServicesForObjects(overview.monopods);
-      updatePodWarnings(overview.vanillaReplicaSets);
-      updateLabelSuggestions(overview.vanillaReplicaSets);
-      groupBindings();
-      updateFilter();
-      Logger.log("replicasets (subscribe)", overview.replicaSets);
-    }));
+    // watches.push(DataService.watch(replicaSetsVersion, context, function(replicaSetData) {
+    //   overview.replicaSets = replicaSetData.by('metadata.name');
+    //   groupReplicaSets();
+    //   updateServicesForObjects(overview.vanillaReplicaSets);
+    //   updateServicesForObjects(overview.monopods);
+    //   updatePodWarnings(overview.vanillaReplicaSets);
+    //   updateLabelSuggestions(overview.vanillaReplicaSets);
+    //   groupBindings();
+    //   updateFilter();
+    //   Logger.log("replicasets (subscribe)", overview.replicaSets);
+    // }));
 
     watches.push(DataService.watch(deploymentsVersion, context, function(deploymentData) {
       deploymentsByUID = deploymentData.by('metadata.uid');
@@ -1378,16 +1378,16 @@ function OverviewController($scope,
       Logger.log("statefulsets (subscribe)", overview.statefulSets);
     }, {poll: limitWatches, pollInterval: DEFAULT_POLL_INTERVAL}));
 
-    DataService.list(daemonSetsVersion, context, function(daemonSetData) {
-      daemonSetsResolved(daemonSetData);
-      // Only watch daemon sets if the initial list was not empty. This saves a
-      // watch for projects that don't have daemon sets, which are relatively
-      // uncommon. We can also start watching daemon sets if there's a pod with
-      // the owner ref to a daemon set.
-      if (!_.isEmpty(overview.daemonSets)) {
-        watchDaemonSets();
-      }
-    });
+    // DataService.list(daemonSetsVersion, context, function(daemonSetData) {
+    //   daemonSetsResolved(daemonSetData);
+    //   // Only watch daemon sets if the initial list was not empty. This saves a
+    //   // watch for projects that don't have daemon sets, which are relatively
+    //   // uncommon. We can also start watching daemon sets if there's a pod with
+    //   // the owner ref to a daemon set.
+    //   if (!_.isEmpty(overview.daemonSets)) {
+    //     watchDaemonSets();
+    //   }
+    // });
 
     watches.push(DataService.watch(servicesVersion, context, function(serviceData) {
       state.allServices = serviceData.by("metadata.name");
@@ -1437,7 +1437,10 @@ function OverviewController($scope,
 
     if ($scope.AEROGEAR_MOBILE_ENABLED) {
       watches.push(MobileClientsService.watch(context, function(clients) {
-        overview.mobileClients = clients.by("metadata.name");
+        overview.mobileClients = _.reduce(clients.by("metadata.name"), function(acc, current, key) {
+          acc[key] = current;
+          return acc;
+        }, {});
         updateFilter();
         Logger.log("mobileclients (subscribe)", clients);
       }, {poll: limitWatches, pollInterval: DEFAULT_POLL_INTERVAL}));

@@ -74,14 +74,14 @@
       row.servicePlan = getServicePlan();
       row.displayName = serviceInstanceDisplayName(row.apiObject, row.serviceClass);
       row.isBindable = BindingService.isServiceBindable(row.apiObject, row.serviceClass, row.servicePlan);
-      if (row.isMobileEnabled) {
-        row.hasMobileClients = !_.isEmpty(row.mobileClients);
-      }
     };
 
     row.$onChanges = function(changes) {
       if (changes.bindings) {
         row.deleteableBindings = _.reject(row.bindings, 'metadata.deletionTimestamp');
+      }
+      if (row.isMobileEnabled && changes.mobileClients) {
+        row.hasMobileClients = !_.isEmpty(row.mobileClients);
       }
     };
 

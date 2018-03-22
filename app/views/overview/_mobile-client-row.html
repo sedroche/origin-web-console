@@ -47,6 +47,14 @@
             </button>
           </div>
         </div>
+      <div class="expanded-section">
+        <div class="col-md-8">
+          <mobile-client-service-associations
+            mobile-client="row.apiObject"
+            project="row.projectName"
+            service-classes=row.state.serviceClasses>
+          </mobile-client-service-associations>
+        </div>
         <div ng-if="loading">
           Loading...
         </div>

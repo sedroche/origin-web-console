@@ -1,25 +1,29 @@
-.mobile-clients {
-  .client-title {
+.mobile-resources {
+  .resource-title {
     border-bottom: none;
   }
 
-  .mobile-client {
+  .mobile-resource {
     height: 60px;
     margin-bottom: 1em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    .client-icon {
+    .resource-img {
+      vertical-align: super;
+    }
+
+    .resource-icon {
       display: inline-block;
       line-height: 42px;
       vertical-align: bottom;
     }
 
-    .client-details {
+    .resource-details {
       display: inline-block;
 
-      .client-type {
+      .resource-id {
         .text-muted();
         font-size: 11px;
         line-height: 11px;
@@ -44,6 +48,11 @@
         vertical-align: middle;
       }
     }
+  }
+
+  .resource-img {
+    display: inline-block;
+    height: 20px;
   }
 
   .dropdown-menu {

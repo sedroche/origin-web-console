@@ -1,22 +1,22 @@
 'use strict';
 
 (function() {
-  angular.module('openshiftConsole').component('mobileServiceClients', {
+  angular.module('openshiftConsole').component('mobileServiceClientsAssociations', {
     controller: [
       '$filter',
       'MobileClientsService',
       'NotificationsService',
-      MobileServiceClientsCtrl
+      MobileServiceClientsAssociationsCtrl
     ],
     bindings: {
       project: '<',
       serviceInstance: '<',
       mobileClients: '<'
     },
-    templateUrl: 'views/directives/mobile-service-clients.html'
+    templateUrl: 'views/directives/mobile-client-service-associations.html'
   });
 
-  function MobileServiceClientsCtrl(
+  function MobileServiceClientsAssociationsCtrl(
                        $filter,
                        MobileClientsService,
                        NotificationsService) {
@@ -24,13 +24,21 @@
     var context = {namespace: _.get(ctrl, 'project.metadata.name')};
     var getErrorDetails = $filter('getErrorDetails');
 
-    ctrl.$doCheck = function() {
-      ctrl.associatedClients = MobileClientsService.filterNotExcluded(ctrl.serviceInstance, ctrl.mobileClients);
-      ctrl.excludedClients = MobileClientsService.filterExcluded(ctrl.serviceInstance, ctrl.mobileClients);
-      ctrl.hasExcludedClients = !_.isEmpty(ctrl.excludedClients);
+    ctrl.$onInit = function() {
+      ctrl.heading = 'Mobile Clients';
+      ctrl.type = 'client';
+      ctrl.hasResources = !_.isEmpty(ctrl.mobileClients);
     };
 
-    ctrl.excludeClient = function(mobileClient) {
+    ctrl.$onChanges = function(changes) {
+      if (changes.mobileClients) {
+        ctrl.hasResources = !_.isEmpty(ctrl.mobileClients);
+        ctrl.associated = MobileClientsService.filterNotExcluded(ctrl.serviceInstance, ctrl.mobileClients);
+        ctrl.excluded = MobileClientsService.filterExcluded(ctrl.serviceInstance, ctrl.mobileClients);        
+      }
+    };
+
+    ctrl.exclude = function(mobileClient) {
       MobileClientsService.excludeClient(mobileClient, ctrl.serviceInstance, context)
       .then(function() {
           NotificationsService.addNotification({
@@ -46,12 +54,12 @@
         });
     };
 
-    ctrl.addMobileClient = function(mobileClient) {
+    ctrl.associate = function(mobileClient) {
       MobileClientsService.removeFromExcluded(mobileClient, ctrl.serviceInstance, context)
         .then(function() {
           NotificationsService.addNotification({
             type: 'success',
-            message: 'Successfully added ' + mobileClient.metadata.name + ' client.'
+            message: 'Successfully added ' + _.get(mobileClient, 'metadata.name') + ' client.'
           });
         })
         .catch(function(error) {

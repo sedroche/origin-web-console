@@ -1,0 +1,40 @@
+<div class="row mobile-resources">
+  <div class="col-sm-6">
+    <div class="resource-title component-label section-label">{{$ctrl.heading}}</div>
+    <div ng-repeat="resource in $ctrl.associatedResources track by resource.uid" class="col-sm-12 col-md-6 mobile-resource">
+      <img ng-if="resource.imageUrl" aria-hidden="true" class="resource-img" ng-src="{{resource.imageUrl}}" />
+      <span ng-if="resource.icon" aria-hidden="true" class="fa-2x {{resource.icon}} resource-icon"></span>
+      <div class="resource-details">
+        <a ng-href="{{resource | navigateResourceURL}}">{{resource.name}}</a>
+        <button type="button" class="exclude" ng-click="$ctrl.remove(resource.object)">
+          <span class="pficon-delete" aria-hidden="true"></span>
+          <span class="sr-only">exclude</span>
+        </button>
+        <div class="resource-id">{{resource.id}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xs-12 col-sm-6">
+    <div class="dropdown pull-right">
+      <button class="btn btn-default dropdown-toggle" type="button" id="excluded-resources" data-toggle="dropdown">
+        Add {{$ctrl.type}}
+        <span class="caret" aria-hidden="true"></span>
+      </button>
+      <ul class="dropdown-menu" role="menu" aria-labelledby="excluded-resources">
+        <li ng-repeat="resource in $ctrl.excludedResources track by resource.uid" ng-if="$ctrl.hasExcluded" ng-click="$ctrl.add(resource.object)" class="has-excluded" role="presentation">
+          <a role="menuitem" tabindex="-1" href="#">
+            <img ng-if="resource.imageUrl" aria-hidden="true" class="resource-img menuicon" ng-src="{{resource.imageUrl}}" />
+            <span ng-if="resource.icon" class="fa-2x {{resource.icon}} menuicon" aria-hidden="true"></span>
+            <span class="menuitemtext">{{resource.name}}</span>
+          </a>
+        </li>
+        <li ng-if="!$ctrl.hasExcluded" class="no-excluded" role="presentation">
+          <a role="menuitem" tabindex="-1" href="#">
+            <span>No {{$ctrl.type}}s.</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
