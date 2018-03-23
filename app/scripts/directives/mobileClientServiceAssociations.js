@@ -40,35 +40,42 @@
       resource: 'mobileclients'
     };
 
-    ctrl.$onInit = function () {
+    ctrl.$onInit = function() {
       ctrl.excluded = [];
       ctrl.associated = [];
       ctrl.heading = 'Mobile Services';
       ctrl.type = 'service';
+      ctrl.hasResources = !_.isEmpty(ctrl.services);
 
-      watches.push(DataService.watch(APIService.getPreferredVersion('serviceinstances'), context, function (serviceInstancesData) {
+      watches.push(DataService.watch(APIService.getPreferredVersion('serviceinstances'), context, function(serviceInstancesData) {
         var data = serviceInstancesData.by('metadata.name');
 
         ctrl.services = _.filter(data, function (serviceInstance) {
           return isMobileService(serviceInstance) && isServiceInstanceReady(serviceInstance);
         });
+        
+        ctrl.hasResources = !_.isEmpty(ctrl.services);
+        ctrl.updateAssociations(ctrl.mobileClient);
       }));
 
       watches.push(DataService.watchObject(mobileclientVersion, _.get(ctrl.mobileClient, 'metadata.name'), context, function(mobileClient) {
-        var excluded = [];
-        var associated = [];
-        _.each(ctrl.services, function (serviceInstance) {
-          if (!_.isEmpty(MobileClientsService.filterExcluded(serviceInstance, [mobileClient]))) {
-            excluded.push(serviceInstance);
-          } else {
-            associated.push(serviceInstance);
-          }
-        });
-
-        ctrl.excluded = excluded;
-        ctrl.associated = associated;
+        ctrl.updateAssociations(mobileClient);
       }));
     };
+
+    ctrl.updateAssociations = function(mobileClient) {
+      var excluded = [];
+      var associated = [];
+      _.each(ctrl.services, function(serviceInstance) {
+        if (!_.isEmpty(MobileClientsService.filterExcluded(serviceInstance, [mobileClient]))) {
+          excluded.push(serviceInstance);
+        } else {
+          associated.push(serviceInstance);
+        }
+      });
+      ctrl.excluded = excluded;
+      ctrl.associated = associated;
+    }
 
     ctrl.associate = function(serviceInstance) {
       var clientName = _.get(ctrl.mobileClient, 'spec.name');

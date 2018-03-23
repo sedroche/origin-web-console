@@ -27,10 +27,12 @@
     ctrl.$onInit = function() {
       ctrl.heading = 'Mobile Clients';
       ctrl.type = 'client';
+      ctrl.hasResources = !_.isEmpty(ctrl.mobileClients);
     };
 
     ctrl.$onChanges = function(changes) {
       if (changes.mobileClients) {
+        ctrl.hasResources = !_.isEmpty(ctrl.mobileClients);
         ctrl.associated = MobileClientsService.filterNotExcluded(ctrl.serviceInstance, ctrl.mobileClients);
         ctrl.excluded = MobileClientsService.filterExcluded(ctrl.serviceInstance, ctrl.mobileClients);        
       }
