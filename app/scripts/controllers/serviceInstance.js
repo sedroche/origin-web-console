@@ -223,7 +223,10 @@ angular.module('openshiftConsole')
               $scope.$watch('isMobileService', function() {
                 if ($scope.isMobileService) {
                   watches.push(MobileClientsService.watch(context, function(clients) {
-                    $scope.mobileClients = clients.by("metadata.name");
+                    $scope.mobileClients = _.reduce(clients.by('metadata.name'), function(acc, current, key) {
+                      acc[key] = current;
+                      return acc;
+                    }, {});
                     $scope.hasMobileClients = !_.isEmpty($scope.mobileClients);
                   }));
                 }
