@@ -1,4 +1,4 @@
-<div class="middle">
+<div class="middle mobile-clients-view">
   <div class="middle-header">
     <div class="container-fluid">
       <breadcrumbs breadcrumbs="breadcrumbs"></breadcrumbs>
@@ -41,7 +41,34 @@
           <uib-tabset>
             <uib-tab active="selectedTab.configuration">
               <uib-tab-heading>Configuration</uib-tab-heading>
-              <pre>{{ctrl.mobileClient | json}}</pre>
+              <div class="row">
+                <div class="resource-details col-md-6">
+                <h3>Mobile Client Details</h3>
+                  <dl class="dl-horizontal left">
+                    <dt>Client Type:</dt>
+                    <dd>{{ctrl.mobileClient.spec.clientType}}</dd>
+                    <dt>Client ID:</dt>
+                    <dd>{{ctrl.mobileClient.spec.appIdentifier}}</dd>
+                    <dt>Client API Key:</dt>
+                    <dd>{{ctrl.mobileClient.spec.apiKey}}</dd>
+                  </dl>
+                  <annotations annotations="ctrl.mobileClient.metadata.annotations"></annotations>
+                </div>
+                <div class="col-md-6 resource-details client-config">
+                  <h3>Mobile Client Config</h3>
+                  <mobile-client-config mobile-client="ctrl.mobileClient" project-name=ctrl.projectName></mobile-client-config>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12 resource-details">
+                  <h3>Mobile Services</h3>
+                  <mobile-client-service-associations
+                    mobile-client="ctrl.mobileClient"
+                    project="ctrl.projectName"
+                    service-classes=ctrl.serviceClasses>
+                  </mobile-client-service-associations>
+                </div>
+              </div>
             </uib-tab>
             <uib-tab active="selectedTab.sdkSetup" ng-if="ctrl.mobileClient">
               <uib-tab-heading>SDK setup</uib-tab-heading>

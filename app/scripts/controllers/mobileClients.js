@@ -9,7 +9,9 @@
 angular.module('openshiftConsole')
   .controller('MobileClientsController',
       function ($filter,
+              $q,
               $routeParams,
+              APIService,
               Constants,
               DataService,
               ProjectsService) {
@@ -34,19 +36,22 @@ angular.module('openshiftConsole')
 
       var watches = [];
 
+      ctrl.projectName = $routeParams.project;
       ProjectsService
-        .get($routeParams.project)
+        .get(ctrl.projectName)
         .then(_.spread(function(project, context) {
           ctrl.project = project;
           ctrl.projectContext = context;
 
-          DataService.get(Constants.MOBILE_CLIENT_VERSION, $routeParams.mobileclient, context, { errorNotification: false }).then(
-            // success
-            function(mobileClient) {
+          return $q.all([
+            DataService.list(APIService.getPreferredVersion('clusterserviceclasses'), ctrl.projectContext),
+            DataService.get(Constants.MOBILE_CLIENT_VERSION, $routeParams.mobileclient, context, { errorNotification: false })
+          ]).then(_.spread(function(serviceClasses, mobileClient) {
               ctrl.loaded = true;
+
+              ctrl.serviceClasses = serviceClasses.by('metadata.name');
               ctrl.mobileClient = mobileClient;
 
-              // If we found the item successfully, watch for changes on it
               watches.push(DataService.watchObject(Constants.MOBILE_CLIENT_VERSION, $routeParams.mobileclient, context, function(mobileClient, action) {
                 if (action === "DELETED") {
                   ctrl.alerts["deleted"] = {
@@ -56,8 +61,7 @@ angular.module('openshiftConsole')
                 }
                 ctrl.mobileClient = mobileClient;
               }));
-            },
-            // failure
+            }),
             function(e) {
               ctrl.loaded = true;
               ctrl.alerts["load"] = {
