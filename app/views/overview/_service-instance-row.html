@@ -162,15 +162,15 @@
             </div>
           </div>
         </div>
-        <div ng-if="row.isMobileEnabled && row.hasMobileClients && (row.apiObject | isMobileService)">
-          <mobile-service-clients-associations ng-if="row.apiObject | isServiceInstanceReady"
+        <div ng-if="row.isMobileEnabled && row.hasMobileClients && (row.apiObject | isMobileService) && (row.apiObject | isServiceInstanceReady)">
+          <mobile-service-clients-associations
             mobile-clients="row.mobileClients"
             service-instance="row.apiObject"
             project="row.state.project"></mobile-service-clients-associations>
         </div>
       </div>
       <div class="expanded-section">
-        <div ng-if="row.isBindable || (row.bindings | size)">
+        <div ng-if="(row.isBindable || (row.bindings | size))">
           <div class="component-label section-label">Bindings</div>
           <service-instance-bindings
             is-overview="true"

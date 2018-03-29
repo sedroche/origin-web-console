@@ -57,10 +57,6 @@
         ctrl.hasResources = !_.isEmpty(ctrl.services);
         ctrl.updateAssociations(ctrl.mobileClient);
       }));
-
-      watches.push(DataService.watchObject(mobileclientVersion, _.get(ctrl.mobileClient, 'metadata.name'), context, function(mobileClient) {
-        ctrl.updateAssociations(mobileClient);
-      }));
     };
 
     ctrl.updateAssociations = function(mobileClient) {
@@ -75,7 +71,7 @@
       });
       ctrl.excluded = excluded;
       ctrl.associated = associated;
-    }
+    };
 
     ctrl.associate = function(serviceInstance) {
       var clientName = _.get(ctrl.mobileClient, 'spec.name');
@@ -113,6 +109,12 @@
             details: getErrorDetails(error)
           });
         });
+    };
+
+    ctrl.$onChanges = function(changes) {
+      if (changes.mobileClient) {
+        ctrl.updateAssociations(ctrl.mobileClient);
+      }
     };
 
     ctrl.$onDestroy = function() {

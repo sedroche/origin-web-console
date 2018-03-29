@@ -49,6 +49,11 @@
       if (changes.associated) {
         ctrl.associatedResources = ctrl.createAssociations(ctrl.associated);
       }
+
+      if (changes.serviceClasses) {
+        ctrl.excludedResources = ctrl.createAssociations(ctrl.excluded);
+        ctrl.associatedResources = ctrl.createAssociations(ctrl.associated);
+      }
     };
 
     ctrl.createAssociations = function(resources) {
@@ -56,7 +61,8 @@
         if (resource.kind === 'MobileClient') {
           return clientAssociation(resource);
         } else {
-          return serviceAssociation(resource, ctrl.serviceClasses[resource.spec.clusterServiceClassRef.name]);
+          var serviceClassRef = _.get(resource, 'spec.clusterServiceClassRef.name');
+          return serviceAssociation(resource, _.get(ctrl, 'serviceClasses.' + serviceClassRef));
         }
       });
     };
