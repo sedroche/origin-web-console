@@ -172,11 +172,11 @@
           </service-instance-bindings>
         </div>
         <div ng-if="row.integrations | size">
-          <service-instance-integrations ng-if="row.instanceStatus === 'ready'"
+          <mobile-service-integrations ng-if="row.instanceStatus === 'ready'"
             is-overview="true"
             integrations="row.integrations"
             consumer-service="row.apiObject">
-          </service-instance-integrations>
+          </mobile-service-integrations>
         </div>
       </div>
     </div>

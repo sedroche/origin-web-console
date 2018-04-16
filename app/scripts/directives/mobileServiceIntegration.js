@@ -1,44 +1,37 @@
 'use strict';
 
 (function() {
-  angular.module('openshiftConsole').component('serviceIntegration', {
+  angular.module('openshiftConsole').component('mobileServiceIntegration', {
     controller: [
       '$filter',
       '$scope',
       'APIService',
-      'AuthorizationService',
-      'BindingService',
-      'Catalog',
       'DataService',
       'NotificationsService',
-      ServiceIntegration
+      MobileServiceIntegration
     ],
     bindings: {
       integration: '<',
       consumerService: '<?'
     },
-    templateUrl: 'views/directives/_service-integration.html'
+    templateUrl: 'views/directives/mobile-integrations.html'
   });
 
-  function ServiceIntegration(
+  function MobileServiceIntegration(
                           $filter,
                           $scope,
                           APIService,
-                          AuthorizationService,
-                          BindingService,
-                          Catalog,
                           DataService,
                           NotificationsService) {
     var ctrl = this;
 
-    var configMapPreferredVersion = APIService.getPreferredVersion('configmaps');
+    var secretsPreferredVersion = APIService.getPreferredVersion('secrets');
     var deploymentPreferredVersion = APIService.getPreferredVersion('deployments');
     var bindingPreferredVersion = APIService.getPreferredVersion('servicebindings');
     var instancePreferredVersion = APIService.getPreferredVersion('serviceinstances');
-    var podPresetPreferredVersion = APIService.kindToResourceGroupVersion({group: "settings.k8s.io", kind: "podpreset"});
+    var podPresetPreferredVersion = APIService.kindToResourceGroupVersion({group: 'settings.k8s.io', kind: 'podpreset'});
     
-    var isServiceInstanceReady = $filter('isServiceInstanceReady');
-    var isBindingReady = $filter("isBindingReady");
+    var isBindingReady = $filter('isBindingReady');
     var getErrorDetails = $filter('getErrorDetails');
 
     var integrationName = ctrl.integration.spec.externalMetadata.serviceName;
@@ -59,32 +52,36 @@
     });
 
     ctrl.$onInit = function() {
-      var context = {namespace: ctrl.consumerService.metadata.namespace};
+      ctrl.context = {namespace: ctrl.consumerService.metadata.namespace};
+      ctrl.projectName = ctrl.context.namespace;
 
-      //setup watch on config maps, looks for the consumer and provider services' configmap to get its service name
-      watches.push(DataService.watch(configMapPreferredVersion, context, function(configMapsData) {
-        var configMaps = configMapsData.by('metadata.name');
+      //setup watch on secrets, looks for the consumer and provider services' secret to get its service name
+      watches.push(DataService.watch(secretsPreferredVersion, ctrl.context, function(secretsData) {
+        var secrets = secretsData.by('metadata.name');
 
-        _.forEach(configMaps, function(configMap) {
-          var serviceInstanceID = _.get(configMap, "metadata.labels.serviceInstanceID");
+        _.forEach(secrets, function(secret) {
+          var serviceInstanceID = _.get(secret, 'metadata.labels.serviceInstanceID');
 
           if (serviceInstanceID === ctrl.consumerService.spec.externalID) {
-            $scope.consumerServiceName = _.get(configMap, 'metadata.labels.serviceName');
+            $scope.consumerServiceName = _.get(secret, 'metadata.labels.serviceName');
+            ctrl.parameterData = {
+              CLIENT_NAME: $scope.consumerServiceName
+            };
             return;
           }
 
           if ($scope.providerServiceInstance && serviceInstanceID === $scope.providerServiceInstance.spec.externalID) {
-            $scope.providerServiceName = _.get(configMap, 'metadata.labels.serviceName');
+            $scope.providerServiceName = _.get(secret, 'metadata.labels.serviceName');
             return;
           }
         });
       }));
 
       //setup watch on service instances, looking for an instance which provides this integration
-      watches.push(DataService.watch(instancePreferredVersion, context, function(serviceInstancesData) {
+      watches.push(DataService.watch(instancePreferredVersion, ctrl.context, function(serviceInstancesData) {
         var data = serviceInstancesData.by('metadata.name');
         $scope.providerServiceInstance = _.find(data, function(serviceInstance) {
-          var clusterServiceClassExternalName = _.get(serviceInstance, "spec.clusterServiceClassExternalName");
+          var clusterServiceClassExternalName = _.get(serviceInstance, 'spec.clusterServiceClassExternalName');
           return (clusterServiceClassExternalName === ctrl.integration.spec.externalName);
         });
       }));
@@ -103,11 +100,12 @@
           return;
         }
         // watch for the pod preset for this integration
-        ppwatch = DataService.watch(podPresetPreferredVersion, context, function(podPresets) {
-          var data = podPresets.by("metadata.name");
-          ctrl.podPreset = _.find(data, function(podPreset) {
+        ppwatch = DataService.watch(podPresetPreferredVersion, ctrl.context, function(podPresets) {
+          var data = podPresets.by('metadata.name');
+          $scope.podPreset = _.find(data, function(podPreset) {
             return podPreset.metadata.name === _.get(ctrl.consumerService, 'metadata.name') + "-" + _.get($scope.providerServiceInstance, 'metadata.name');
           });
+          ctrl.checkIntegration();
         });
       });
 
@@ -121,46 +119,70 @@
           return;
         }
 
+
         //dont recreate the binding watch
         if(bindingWatch !== false) {
           return;
         }
 
         //setup watch on servincebindings, watch for bindings consumed by this service
-        bindingWatch = DataService.watch(bindingPreferredVersion, context, function(bindingData) {
-          var data = bindingData.by("metadata.name");
+        bindingWatch = DataService.watch(bindingPreferredVersion, ctrl.context, function(bindingData) {
+          var data = bindingData.by('metadata.name');
           ctrl.binding = _.find(data, function(binding) {
-            var bindingProviderName = _.get(binding, ["metadata", "annotations", "integrations.aerogear.org/provider"]);
-            var bindingConsumerName = _.get(binding, ["metadata", "annotations", "integrations.aerogear.org/consumer"]);
+            var bindingProviderName = _.get(binding, ['metadata', 'annotations', 'integrations.aerogear.org/provider']);
+            var bindingConsumerName = _.get(binding, ['metadata', 'annotations', 'integrations.aerogear.org/consumer']);
             return (bindingProviderName && bindingConsumerName && $scope.consumerServiceName && bindingProviderName === integrationName && bindingConsumerName === $scope.consumerServiceName);
           });
+          ctrl.checkIntegration();
         });
       });
+    };
 
+    ctrl.checkIntegration = function() {
+      // Delete integration in progress
+      if ($scope.podPreset && !ctrl.binding) {
+        ctrl.isIntegrationPending = true;
+        ctrl.hasIntegration = false;
+      }
+      // Integration present
+      if ($scope.podPreset && ctrl.binding) {
+        ctrl.hasIntegration = true;
+        ctrl.isIntegrationPending = false;
+      }
+      // Create integration in progress
+      if (ctrl.binding && !$scope.podPreset) {
+        ctrl.isIntegrationPending = true;
+        ctrl.hasIntegration = false;
+      }
+      // No Integration present
+      if (!ctrl.binding && !$scope.podPreset) {
+        ctrl.isIntegrationPending = false;
+        ctrl.hasIntegration = false;
+      }
     };
 
     var generatePodPresetTemplate = function(consumerService, providerService, binding) {
       var consumerSvcName = _.get(consumerService, 'metadata.name');
       var providerSvcName = _.get(providerService, 'metadata.name');
       var podPreset = {
-        apiVersion: "settings.k8s.io/v1alpha1",
-        kind: "PodPreset",
+        apiVersion: 'settings.k8s.io/v1alpha1',
+        kind: 'PodPreset',
         metadata: {
           name: consumerSvcName + '-' + providerSvcName,
           labels: {
-            group: "mobile",
+            group: 'mobile',
             service: providerSvcName
           }
         },
         spec: {
           selector: {
             matchLabels: {
-              run: consumerSvcName
+              run: $scope.consumerServiceName
             }
           },
           volumeMounts: [
             {
-              mountPath: "/etc/secrets/" + providerSvcName,
+              mountPath: '/etc/secrets/' + providerSvcName,
               readOnly: true,
               name: providerSvcName
             }
@@ -176,28 +198,11 @@
         }
       };
 
-      podPreset.spec.selector.matchLabels[providerSvcName] = "enabled";
+      podPreset.spec.selector.matchLabels[providerSvcName] = 'enabled';
       return podPreset;
     };
 
-    ctrl.integrationPanelVisible = false;
-
-    ctrl.closeIntegrationPanel = function() {
-      ctrl.integrationPanelVisible = false;
-    };
-
-    ctrl.openIntegrationPanel = function() {
-      ctrl.parameterData = {
-        service: $scope.consumerServiceName
-      };
-      ctrl.integrationPanelVisible = true;
-    };
-
-    ctrl.provision = function() {
-      $scope.$emit("open-overlay-panel", Catalog.getServiceItem(ctrl.integration));
-    };
-
-    ctrl.onBind = function(binding) {
+    ctrl.create = function(binding) {
       var context = {namespace: _.get(ctrl.consumerService, 'metadata.namespace')};
       var podPreset = generatePodPresetTemplate(ctrl.consumerService, $scope.providerServiceInstance, binding);
       
@@ -208,11 +213,11 @@
           DataService.unwatch(bindingReadyWatch);
           var copiedBinding = angular.copy(watchBinding);
           NotificationsService.addNotification({
-            type: "success",
-            message: "A binding has been created for " + $scope.consumerServiceName + " and it has been redeployed."
+            type: 'success',
+            message: 'A binding has been created for ' + $scope.consumerServiceName + ' and it has been redeployed.'
           });
-          _.setWith(copiedBinding, ["metadata", "annotations", "integrations.aerogear.org/consumer"], $scope.consumerServiceName);
-          _.setWith(copiedBinding, ["metadata", "annotations", "integrations.aerogear.org/provider"], integrationName);
+          _.setWith(copiedBinding, ['metadata', 'annotations', 'integrations.aerogear.org/consumer'], $scope.consumerServiceName);
+          _.setWith(copiedBinding, ['metadata', 'annotations', 'integrations.aerogear.org/provider'], integrationName);
           // update the binding with consumer and provider metadata annotations
           DataService.update(bindingPreferredVersion, copiedBinding.metadata.name, copiedBinding, context)
           // then retrieve the deployment
@@ -225,19 +230,20 @@
           })
           // then add the enabled service metadata label
           .then(function(deployment) {
-            deployment.spec.template.metadata.labels[$scope.providerServiceName] = "enabled";
+            var copyDeployment = angular.copy(deployment);
+            copyDeployment.spec.template.metadata.labels[_.get($scope.providerServiceInstance, 'metadata.name')] = 'enabled';
             // and update the deployment and trigger a redeploy
             return DataService.update(
               deploymentPreferredVersion, 
               $scope.consumerServiceName, 
-              deployment, 
+              copyDeployment,
               context
             );
           })
           .catch(function(err) {
             NotificationsService.addNotification({
-              type: "error",
-              message: "Failed to integrate service binding.",
+              type: 'error',
+              message: 'Failed to integrate service binding.',
               details: err.data.message
             });
           });
@@ -248,44 +254,18 @@
       DataService.create(podPresetPreferredVersion, null, podPreset, context)
       .catch(function(err) {
         NotificationsService.addNotification({
-          type: "error",
-          message: "Failed to create pod preset.",
+          type: 'error',
+          message: 'Failed to create pod preset.',
           details: getErrorDetails(err)
         });
       });
       
     };
 
-    ctrl.getState = function() {
-      if (ctrl.podPreset && !ctrl.binding) {
-        // pending create
-        return "pending";
-      }
-      if (ctrl.podPreset && ctrl.binding) {
-        //pod preset and binding exist, state 1
-        return "active";
-      }
-      if (ctrl.binding && !ctrl.podPreset) {
-        //pending delete
-        return "pending";
-      }
-      if ($scope.providerServiceInstance && isServiceInstanceReady($scope.providerServiceInstance)) {
-        return "no-binding";
-      } 
-      if ($scope.providerServiceInstance && !isServiceInstanceReady($scope.providerServiceInstance) && _.get($scope, 'providerServiceInstance.status.currentOperation') === 'Provision') {
-        return "service-provision-pending";
-      }
-      if ($scope.providerServiceInstance && !isServiceInstanceReady($scope.providerServiceInstance) && _.get($scope, 'providerServiceInstance.status.currentOperation') === 'Deprovision') {
-        return "service-deprovision-pending";
-      }
-      return "no-service";
-    };
-
-    //called in callback from succesful delete-link for binding
-    ctrl.deletePodPreset = function() {
+    ctrl.delete = function() {
       var context = {namespace: ctrl.consumerService.metadata.namespace};
       var deleteOptions = {propagationPolicy: null};
-      DataService.delete(podPresetPreferredVersion, ctrl.podPreset.metadata.name, context, deleteOptions)
+      DataService.delete(podPresetPreferredVersion, $scope.podPreset.metadata.name, context, deleteOptions)
       .then(function() {
         return DataService.get(
           deploymentPreferredVersion, 
@@ -295,7 +275,7 @@
       })
       .then(function(deployment) {
         var copyDeployment = angular.copy(deployment);
-        delete copyDeployment.spec.template.metadata.labels[integrationName];
+        delete copyDeployment.spec.template.metadata.labels[_.get($scope.providerServiceInstance, 'metadata.name')];
         return DataService.update(
           deploymentPreferredVersion, 
           $scope.consumerServiceName, 
@@ -305,8 +285,8 @@
       })
       .catch(function(error) {
         NotificationsService.addNotification({
-          type: "error",
-          message: "There was an error deleting the integration.",
+          type: 'error',
+          message: 'There was an error deleting the integration.',
           details: getErrorDetails(error)
         });
       });

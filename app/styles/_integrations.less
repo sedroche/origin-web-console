@@ -1,4 +1,4 @@
-.service-integrations {
+.mobile-integrations {
   .component-label.section-label {
     margin: 0 20px;
   }
@@ -8,13 +8,18 @@
     cursor: pointer;
   }
 
-  .service-integration {
+  .mobile-integration {
     height: 40px;
     margin: 10px 20px 0 0;
-    .image-icon {
+    .integration-icon {
       padding-top: 5px;
       margin: 0 15px;
       width: 30px;
+
+      &.icon {
+        font-size: 30px;
+        color: @text-color;
+      }
     }
     .id {
       .text-muted();
@@ -31,18 +36,14 @@
         display: inline;
       }
 
-      &.active {
-        .pficon-error-circle-o {
-          &:before {
-            color: @link-color;
-          }
-          cursor: pointer;
-        }
-      }
-
       //override delete-link default icon with the patternfly icon
       .description {
+        .integration-error {
+          vertical-align: middle;
+        }
+
         .inline-delete {
+          margin-left: 3px;
           .fa-trash-o {
             font-family: "PatternFlyIcons-webfont";
             color: @text-color;
@@ -54,19 +55,19 @@
         }
       }
 
-      &.inactive {
-        .pficon-add-circle-o {
-          cursor: pointer;
-        }
-      }
-
-      &.unknown {
+      &.no-instance {
         .description h4 {
           .text-muted();
         }
         .id {
           color: @link-color;
           cursor: pointer;
+        }
+      }
+
+      &.instance-error {
+        .pficon-error-circle-o {
+          margin-right: 5px;
         }
       }
     }
