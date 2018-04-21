@@ -15,7 +15,7 @@ angular.module('openshiftConsole').component('mobileServiceIntegrations', {
 
 function MobileServiceIntegrations(APIService, DataService) {
   var ctrl = this;
-
+  
   var serviceClassesPreferredVersion = APIService.getPreferredVersion('clusterserviceclasses');
 
   DataService.list(serviceClassesPreferredVersion, {})

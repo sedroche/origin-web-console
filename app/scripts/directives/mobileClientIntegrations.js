@@ -20,7 +20,6 @@ function MobileClientIntegrations(APIService, DataService) {
   DataService.list(serviceClassesPreferredVersion, {})
   .then(function(serviceClasses) {
     ctrl.integrationsData = _.filter(serviceClasses.by('metadata.name'), function(serviceClass) {
-      var serviceClassName = _.get(serviceClass, 'spec.externalMetadata.serviceName');
       var tags = _.get(serviceClass, 'spec.tags', []);
       return _.includes(tags, 'mobile-client-enabled');
     });
