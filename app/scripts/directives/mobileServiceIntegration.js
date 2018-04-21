@@ -30,6 +30,7 @@
     var instancePreferredVersion = APIService.getPreferredVersion('serviceinstances');
     var podPresetPreferredVersion = APIService.kindToResourceGroupVersion({group: 'settings.k8s.io', kind: 'podpreset'});
     var isBindingReady = $filter('isBindingReady');
+    var isBindingFailed = $filter('isBindingFailed');
     var getErrorDetails = $filter('getErrorDetails');
 
     var watches = [];
@@ -38,7 +39,7 @@
       ctrl.consumerInstance = ctrl.consumerService;
       ctrl.context = {namespace: ctrl.consumerService.metadata.namespace};
 
-      // Setup watch on secrets, looks for the consumer and provider services' secret to get its service name.
+      // Setup watch on secrets, looks for the consumer secret to get its service name.
       watches.push(DataService.watch(secretsPreferredVersion, ctrl.context, function(secretsData) {
         if(ctrl.consumerServiceName) {
           return;
@@ -70,7 +71,7 @@
 
         var data = podPresets.by('metadata.name');
         ctrl.podPreset = _.find(data, function(podPreset) {
-          return podPreset.metadata.name === _.get(ctrl.consumerService, 'metadata.name') + "-" + _.get(ctrl.providerServiceInstance, 'metadata.name');
+          return podPreset.metadata.name === _.get(ctrl.consumerService, 'metadata.name') + '-' + _.get(ctrl.providerServiceInstance, 'metadata.name');
         });
       }));
     };
@@ -120,17 +121,16 @@
       var podPreset = generatePodPresetTemplate(ctrl.consumerService, ctrl.providerServiceInstance, binding);
 
       var bindingReadyWatch = DataService.watchObject(bindingPreferredVersion, _.get(binding, 'metadata.name'), ctrl.context, function(watchBinding) {
-        if (!isBindingReady(watchBinding)) {
+        if (!isBindingReady(watchBinding) || isBindingFailed(watchBinding)) {
           return;
         }
 
         DataService.unwatch(bindingReadyWatch);
-        NotificationsService.addNotification({
-          type: 'success',
-          message: 'Integration has been created for ' + ctrl.consumerServiceName + ' and it is being redeployed.'
-        });
-        
-        DataService.get(deploymentPreferredVersion, ctrl.consumerServiceName, ctrl.context, {errorNotification: false})
+
+        DataService.create(podPresetPreferredVersion, null, podPreset, ctrl.context)
+          .then(function() {
+            return DataService.get(deploymentPreferredVersion, ctrl.consumerServiceName, ctrl.context, {errorNotification: false})
+          })
           .then(function() {
             return DataService.get(deploymentPreferredVersion, ctrl.consumerServiceName, ctrl.context, {errorNotification: false});
           })
@@ -138,6 +138,12 @@
             var copyDeployment = angular.copy(deployment);
             copyDeployment.spec.template.metadata.labels[_.get(ctrl.providerServiceInstance, 'metadata.name')] = 'enabled';
             return DataService.update(deploymentPreferredVersion, ctrl.consumerServiceName, copyDeployment, ctrl.context);
+          })
+          .then(function() {
+            NotificationsService.addNotification({
+              type: 'success',
+              message: 'Integration has been created for ' + ctrl.consumerServiceName + ' and it is being redeployed.'
+            });
           })
           .catch(function(err) {
             NotificationsService.addNotification({
@@ -147,20 +153,12 @@
             });
           });
       });
-      
-      // Create the pod preset asynchronously to the binding
-      DataService.create(podPresetPreferredVersion, null, podPreset, ctrl.context)
-        .catch(function(err) {
-          NotificationsService.addNotification({
-            type: 'error',
-            message: 'Failed to create pod preset.',
-            details: getErrorDetails(err)
-          });
-        });
+      watches.push(bindingReadyWatch);
     };
 
     ctrl.delete = function() {
       var deleteOptions = {propagationPolicy: null};
+
       DataService.delete(podPresetPreferredVersion, ctrl.podPreset.metadata.name, ctrl.context, deleteOptions)
       .then(function() {
         return DataService.get(deploymentPreferredVersion, ctrl.consumerServiceName, ctrl.context);
@@ -169,11 +167,13 @@
         var copyDeployment = angular.copy(deployment);
         delete copyDeployment.spec.template.metadata.labels[_.get(ctrl.providerServiceInstance, 'metadata.name')];
 
+        return DataService.update(deploymentPreferredVersion, ctrl.consumerServiceName, copyDeployment, ctrl.context);
+      })
+      .then(function() {
         NotificationsService.addNotification({
           type: 'success',
           message: 'Integration has been deleted for ' + ctrl.consumerServiceName + ' and it is being redeployed.'
         });
-        return DataService.update(deploymentPreferredVersion, ctrl.consumerServiceName, copyDeployment, ctrl.context);
       })
       .catch(function(error) {
         NotificationsService.addNotification({
