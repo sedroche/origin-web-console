@@ -8,10 +8,11 @@
       'APIService',
       'Catalog',
       'DataService',
+      'ServiceInstancesService',
       MobileIntegration
     ],
     bindings: {
-      integrationServiceClass: '<',
+      integration: '<',
       onCreate: '<',
       onDelete: '<',
       consumerInstance: '<',
@@ -25,7 +26,8 @@
     $scope,
     APIService,
     Catalog,
-    DataService
+    DataService,
+    ServiceInstancesService
   ) {
     var ctrl = this;
     var instancePreferredVersion = APIService.getPreferredVersion('serviceinstances');
@@ -34,24 +36,33 @@
     var watches = [];
 
     ctrl.$onInit = function() {
-      var context = {namespace: ctrl.projectName = _.get(ctrl, 'consumerInstance.metadata.namespace')};
+      var context = {namespace: _.get(ctrl, 'consumerInstance.metadata.namespace')};
 
-      watches.push(DataService.watch(instancePreferredVersion, context, function(serviceInstancesData) {
-        var data = serviceInstancesData.by('metadata.name');
-        ctrl.integrationServiceInstance = _.find(data, function(serviceInstance) {
-          var clusterServiceClassExternalName = _.get(serviceInstance, 'spec.clusterServiceClassExternalName');
-          return (clusterServiceClassExternalName === ctrl.integrationServiceClass.spec.externalName);
-        });
-        ctrl.integrationInstanceProvisioning = _.get(ctrl, 'integrationServiceInstance.status.currentOperation') === 'Provision';
-        ctrl.integrationInstanceDeprovisioning = _.get(ctrl, 'integrationServiceInstance.status.currentOperation') === 'Deprovision';
-        // TODO: Standardise this to integrations.aerogear.org/consumer and integrations.aerogear.org/provider once the bindingMeta has been accepted.
-        ctrl.bindingMeta = {
-          annotations: {
-            'integrations.aerogear.org/consumer': _.get(ctrl, 'consumerInstance.metadata.name'),
-            'integrations.aerogear.org/provider': _.get(ctrl, 'integrationServiceInstance.metadata.name')
-          }
-        };
-      }));
+      if (ctrl.integration.kind === 'ClusterServiceClass') {
+        ctrl.integrationServiceClass = ctrl.integration;
+
+        if (!_.includes(ctrl.integrationServiceClass.spec.externalName, 'custom-runtime-connector')) {
+          watches.push(DataService.watch(instancePreferredVersion, context, function(serviceInstancesData) {
+            var data = serviceInstancesData.by('metadata.name');
+            ctrl.integrationServiceInstance = _.find(data, function(serviceInstance) {
+              var clusterServiceClassExternalName = _.get(serviceInstance, 'spec.clusterServiceClassExternalName');
+              return (clusterServiceClassExternalName === ctrl.integration.spec.externalName);
+            });
+            ctrl.checkIntegrationInstanceStatus();
+          }));
+        }
+      } else if (ctrl.integration.kind === 'ServiceInstance') {
+        ctrl.integrationServiceInstance = ctrl.integration;
+        ServiceInstancesService.fetchServiceClassForInstance(ctrl.integrationServiceInstance)
+          .then(function (serviceClass){
+            ctrl.integrationServiceClass = serviceClass;
+          });
+        ctrl.checkIntegrationInstanceStatus();
+        watches.push(DataService.watchObject(instancePreferredVersion, _.get(ctrl, 'integrationServiceInstance.metadata.name'), context, function(serviceInstance) {
+          ctrl.integrationServiceInstance = serviceInstance;
+          ctrl.checkIntegrationInstanceStatus();
+        }));
+      }
 
       DataService.watch(bindingPreferredVersion, context, function(bindingData) {
         var data = bindingData.by('metadata.name');
@@ -83,6 +94,18 @@
         ctrl.hasBinding = false;
         ctrl.isBindPending = true;
       }
+    };
+
+    ctrl.checkIntegrationInstanceStatus = function() {
+      ctrl.integrationInstanceProvisioning = _.get(ctrl, 'integrationServiceInstance.status.currentOperation') === 'Provision';
+      ctrl.integrationInstanceDeprovisioning = _.get(ctrl, 'integrationServiceInstance.status.currentOperation') === 'Deprovision';
+      // TODO: Standardise this to integrations.aerogear.org/consumer and integrations.aerogear.org/provider once the bindingMeta has been accepted.
+      ctrl.bindingMeta = {
+        annotations: {
+          'integrations.aerogear.org/consumer': _.get(ctrl, 'consumerInstance.metadata.name'),
+          'integrations.aerogear.org/provider': _.get(ctrl, 'integrationServiceInstance.metadata.name')
+        }
+      };
     };
 
     ctrl.integrationPanelVisible = false;

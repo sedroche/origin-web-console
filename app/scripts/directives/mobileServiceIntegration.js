@@ -129,7 +129,7 @@
 
         DataService.create(podPresetPreferredVersion, null, podPreset, ctrl.context)
           .then(function() {
-            return DataService.get(deploymentPreferredVersion, ctrl.consumerServiceName, ctrl.context, {errorNotification: false})
+            return DataService.get(deploymentPreferredVersion, ctrl.consumerServiceName, ctrl.context, {errorNotification: false});
           })
           .then(function() {
             return DataService.get(deploymentPreferredVersion, ctrl.consumerServiceName, ctrl.context, {errorNotification: false});
