@@ -10,6 +10,7 @@
       'DataService',
       'ListRowUtils',
       'Navigate',
+      'ServiceInstancesService',
       MobileAppRow,
     ],
     controllerAs: 'row',
@@ -20,7 +21,7 @@
     templateUrl: 'views/overview/_mobile-client-row.html'
   });
 
-  function MobileAppRow($filter, $routeParams, APIService, AuthorizationService, DataService, ListRowUtils, Navigate) {
+  function MobileAppRow($filter, $routeParams, APIService, AuthorizationService, DataService, ListRowUtils, Navigate, ServiceInstancesService) {
     var row = this;
     var serviceInstancesVersion = APIService.getPreferredVersion('serviceinstances');
     var isServiceInstanceReady = $filter('isServiceInstanceReady');
@@ -30,10 +31,13 @@
     _.extend(row, ListRowUtils.ui);
 
     row.$onInit = function() {
-      var context = {namespace: _.get(row, 'apiObject.metadata.namespace')};
-      DataService.watch(serviceInstancesVersion, context, function (serviceinstances){
+      row.context = {namespace: _.get(row, 'apiObject.metadata.namespace')};
+      DataService.watch(serviceInstancesVersion, row.context, function (serviceinstances){
         row.services = _.filter(serviceinstances.by('metadata.name'), function(serviceInstance){
-          return isMobileService(serviceInstance) && isServiceInstanceReady(serviceInstance);
+          return ServiceInstancesService.fetchServiceClassForInstance(serviceInstance)
+            .then(function (serviceClass){
+              return isMobileService(serviceClass) && isServiceInstanceReady(serviceInstance);
+            });
         });
       }, { errorNotification: false });
     };
