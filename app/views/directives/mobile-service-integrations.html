@@ -1,0 +1,9 @@
+<div ng-if="($ctrl.integrationsData | size)" class="row mobile-integrations">
+  <div class="component-label section-label">Integrations</div>
+  <mobile-service-integration
+    ng-repeat="integration in $ctrl.integrationsData"
+    integration="integration"
+    consumer-service="$ctrl.consumerService">
+  </mobile-service-integration>
+</div>
+  

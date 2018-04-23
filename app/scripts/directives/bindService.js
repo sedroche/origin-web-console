@@ -17,7 +17,10 @@
     bindings: {
       target: '<',
       project: '<',
-      onClose: '<'
+      onClose: '<',
+      onFinish: '<',
+      parameterData: '<',
+      bindingMeta: '<'
     },
     templateUrl: 'views/directives/bind-service.html'
   });
@@ -193,7 +196,7 @@
       ctrl.serviceSelection = {};
       ctrl.projectDisplayName = $filter('displayName')(ctrl.project);
       ctrl.podPresets = enableTechPreviewFeature('pod_presets');
-      ctrl.parameterData = {};
+      ctrl.parameterData = ctrl.parameterData || {};
 
       ctrl.steps = [ bindFormStep, bindParametersStep, resultsStep ];
       ctrl.hideBack = bindParametersStep.hidden;
@@ -242,16 +245,23 @@
       };
 
       var serviceClass = BindingService.getServiceClassForInstance(svcToBind, ctrl.serviceClasses);
-      BindingService.bindService(svcToBind, application, serviceClass, ctrl.parameterData).then(function(binding){
+      BindingService.bindService(svcToBind, application, serviceClass, ctrl.parameterData, ctrl.bindingMeta).then(function(binding){
         ctrl.binding = binding;
         ctrl.error = null;
 
         bindingWatch = DataService.watchObject(BindingService.bindingResource, _.get(ctrl.binding, 'metadata.name'), context, function(binding) {
           ctrl.binding = binding;
         });
+        ctrl.wizardFinished(binding);
       }, function(e) {
         ctrl.error = e;
       });
+    };
+
+    ctrl.wizardFinished = function(binding) {
+      if (_.isFunction(ctrl.onFinish)) {
+        ctrl.onFinish(binding);
+      }
     };
 
     ctrl.closeWizard = function() {

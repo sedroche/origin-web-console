@@ -1,0 +1,47 @@
+<div class="mobile-integration pull-left" ng-if="$ctrl.integrationServiceClass">
+  <div ng-class="{'no-instance': !($ctrl.integrationServiceInstance | isServiceInstanceReady) && !($ctrl.integrationInstanceProvisioning || $ctrl.integrationInstanceDeprovisioning) && !($ctrl.integrationServiceInstance | isServiceInstanceFailed),
+                  'instance-error': ($ctrl.integrationServiceInstance | isServiceInstanceFailed)}" class="integration">
+    <img ng-if="$ctrl.integrationServiceClass.spec.externalMetadata.imageUrl" class="integration-icon image pull-left" ng-src="{{ $ctrl.integrationServiceClass.spec.externalMetadata.imageUrl }}">
+    <div ng-if="$ctrl.integrationServiceClass.spec.externalMetadata['console.openshift.io/iconClass']"  class="pull-left">
+      <span class="{{$ctrl.integrationServiceClass.spec.externalMetadata['console.openshift.io/iconClass']}} integration-icon icon"></span>
+    </div>
+    <div class="description pull-left">
+      <h4 class="integration-name">{{$ctrl.integrationServiceClass.spec.externalMetadata.displayName || "Service Integration"}}</h4>
+      <span class="integration-error" ng-if="$ctrl.isBindPending || $ctrl.integrationInstanceProvisioning || $ctrl.integrationInstanceDeprovisioning">
+        <span class="spinner spinner-xs spinner-inline" aria-hidden="true"></span>
+      </span>
+      <delete-link
+        class="inline-delete"
+        ng-if="$ctrl.hasBinding"
+        kind="servicebinding"
+        group="servicecatalog.k8s.io"
+        button-only="true"
+        stay-on-current-page="true"
+        resource-name="{{$ctrl.binding.metadata.name}}"
+        project-name="{{$ctrl.binding.metadata.namespace}}"
+        success="$ctrl.onDelete">
+      </delete-link>
+      <div class="id" ng-if="$ctrl.isBindPending && !($ctrl.integrationInstanceProvisioning || $ctrl.integrationInstanceDeprovisioning)">Status: Pending</div>
+      <div class="id" ng-if="($ctrl.integrationServiceInstance | isServiceInstanceReady) && (!$ctrl.isBindPending && $ctrl.hasBinding)">ID: {{ $ctrl.binding.metadata.name }}</div>
+      <div class="id" ng-if="($ctrl.integrationServiceInstance | isServiceInstanceReady) && (!$ctrl.isBindPending && !$ctrl.hasBinding)">No {{$ctrl.integrationServiceClass.spec.externalMetadata.displayName}} integration found.
+        <span ng-click="$ctrl.openIntegrationPanel()" class="integrate-link">Integrate {{$ctrl.integrationServiceClass.spec.externalMetadata.displayName}}</span>
+      </div>
+      <div class="id" ng-if="$ctrl.integrationInstanceProvisioning">Waiting for {{$ctrl.integrationServiceClass.spec.externalMetadata.displayName}} provision to complete.</div>
+      <div class="id" ng-if="$ctrl.integrationInstanceDeprovisioning">Waiting for {{$ctrl.integrationServiceClass.spec.externalMetadata.displayName}} deprovision to complete.</div>
+      <div class="id" ng-if="!$ctrl.integrationServiceInstance">
+        <span ng-click="$ctrl.provision()">Provision {{$ctrl.integrationServiceClass.spec.externalMetadata.displayName}} to enable integration.</span>
+      </div>
+      <div class="id" ng-if="$ctrl.integrationServiceInstance && ($ctrl.integrationServiceInstance | isServiceInstanceFailed) && !($ctrl.integrationInstanceProvisioning || $ctrl.integrationInstanceDeprovisioning)">
+        <span class="pficon pficon-error-circle-o" aria-hidden="true"></span><span>Error: Deprovision {{$ctrl.integrationServiceClass.spec.externalMetadata.displayName}} and reprovision.</span></div>
+    </div>
+  </div>
+</div>
+
+<overlay-panel show-panel="$ctrl.integrationPanelVisible" handle-close="$ctrl.closeIntegrationPanel">
+  <bind-service target="$ctrl.integrationServiceInstance"
+                project="$ctrl.project"
+                on-close="$ctrl.closeIntegrationPanel"
+                on-finish="$ctrl.onCreate"
+                parameter-data="$ctrl.parameterData"
+                binding-meta="$ctrl.bindingMeta"></bind-service>
+</overlay-panel>
