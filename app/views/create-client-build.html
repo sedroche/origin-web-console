@@ -1,0 +1,88 @@
+<div class="middle surface-shaded">
+  <div class="middle-content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-10">
+          <div ng-if="!project" class="mar-top-md">Loading...</div>
+          <div ng-if="project">
+            <breadcrumbs breadcrumbs="breadcrumbs"></breadcrumbs>
+            <alerts alerts="alerts"></alerts>
+            <div class="mar-top-xl">
+              <h1>Create Client Build</h1>
+              <div class="help-block">
+                Client Build allows you to create a Mobile Client binary from a Git Repo.
+              </div>
+              <ng-form name="clientBuildForm" class="create-secret-form">
+                <div class="form-group">
+                  <label for="client-build-name">Client Build Name</label>
+                  <input class="form-control" id="client-build-name" name="client-build-name" ng-model="newClientBuild.clientBuildName" type="text">
+                </div>
+                <div class="form-group">
+                  <label for="git-repo-uri">Git Repo URI</label>
+                  <input class="form-control" id="git-repo-uri" name="git-repo-uri" ng-model="newClientBuild.gitRepoUri" type="text">
+                  <div class="help-block" id="git-repo-uri-help">
+                    URL of the github repo.
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="git-repo-branch">Git Repo Branch</label>
+                  <input class="form-control" id="git-repo-branch" name="git-repo-branch" ng-model="newClientBuild.gitRepoBranch" type="text">
+                  <div class="help-block" id="git-repo-branch-help">
+                    The branch of the github repo to build.
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="jenkins-file-location">Path to Jenkins file.</label>
+                  <input class="form-control" id="jenkins-file-location" name="jenkins-file-location" ng-model="newClientBuild.jenkinsFileLocation" type="text">
+                  <div class="help-block" id="jenkins-file-location-help">
+                    The location in the github repo of the Jenkins file. (Default is root)
+                  </div>
+                </div>
+
+                <!-- change naming/ids of these elements -->
+                <div class="form-group" id="repo-is-private">
+                  <div class="form-group">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" ng-model="newClientBuild.isPrivateRepo">
+                        Private github repo?
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group" ng-if="newClientBuild.isPrivateRepo"  id="cacert">
+                    <label class="required" for="cacert">Github Key</label>
+                    <osc-file-input
+                      id="cacert-file-input"
+                      model="newClientBuild.credentials"
+                      help-text="Upload your github credentials."
+                      required="true"></osc-file-input>
+                </div>
+
+                <!-- change naming/ids of these elements -->
+                <div class="form-group" id="android-details">
+                  <div class="form-group" id="android-details">
+                    <label class="required" for="android-details">Android Credentials</label>
+                    <osc-file-input
+                      id="android-details-file-input"
+                      model="newClientBuild.androidCredentials"
+                      help-text="Upload your android credentials."
+                      required="true"></osc-file-input>
+                </div>
+
+                <div class="buttons gutter-top-bottom">
+                  <button class="btn btn-primary"
+                          type="button"
+                          ng-disabled="clientBuildForm.$invalid || clientBuildForm.$pristine"
+                          ng-click="createClientBuild()">Create</button>
+                  <button class="btn btn-default"
+                          type="button"
+                          ng-click="navigateBack()">Cancel</button>
+                </div>
+              </ng-form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /middle-content -->
+</div><!-- /middle -->
