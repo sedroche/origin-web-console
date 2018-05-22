@@ -17,7 +17,8 @@
     bindings: {
       target: '<',
       project: '<',
-      onClose: '<'
+      onClose: '<',
+      bindingMeta: '<'
     },
     templateUrl: 'views/directives/bind-service.html'
   });
@@ -242,7 +243,7 @@
       };
 
       var serviceClass = BindingService.getServiceClassForInstance(svcToBind, ctrl.serviceClasses);
-      BindingService.bindService(svcToBind, application, serviceClass, ctrl.parameterData).then(function(binding){
+      BindingService.bindService(svcToBind, application, serviceClass, ctrl.parameterData, ctrl.bindingMeta).then(function(binding){
         ctrl.binding = binding;
         ctrl.error = null;
 
