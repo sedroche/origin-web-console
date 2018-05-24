@@ -1,0 +1,53 @@
+<div class="list-pf-item provisioned-service" ng-class="{ active: row.expanded }">
+  <div class="list-pf-container" ng-click="row.toggleExpand($event)">
+    <div class="list-pf-chevron">
+      <div ng-include src=" 'views/overview/_list-row-chevron.html' " class="list-pf-content"></div>
+    </div>
+    <div class="list-pf-content">
+      <div class="list-pf-name">
+        <span class="status-icon" ng-class="row.latestBuild.status.phase">
+          <span ng-switch="row.latestBuild.status.phase" class="hide-ng-leave">
+            <span ng-switch-when="Complete" aria-hidden="true">
+              <i class="fa fa-check-circle fa-fw"></i>
+            </span>
+            <span ng-switch-when="Failed" aria-hidden="true">
+              <i class="fa fa-times-circle fa-fw"></i>
+            </span>
+            <span ng-switch-default>
+              <status-icon status="row.latestBuild.status.phase"></status-icon>
+            </span>
+          </span>
+        </span>
+        <span ng-bind-html="row.buildConfig.metadata.name" class="list-row-longname"></span>
+        <button class="btn btn-default pull-right" ng-if="row.buildConfigsInstantiateVersion | canI : 'create'" ng-click="row.startBuild()">Start Build</button>
+      </div>
+    </div>
+
+    <div class="list-pf-actions">
+      <div class="dropdown-kebab-pf" uib-dropdown>
+        <button uib-dropdown-toggle class="btn btn-link dropdown-toggle">
+          <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+          <span class="sr-only">Actions</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu role="menu">
+          <li role="menuitem" ng-if="row.buildConfigsVersion | canI : 'delete'">
+            <delete-link
+              resource-name="{{row.buildConfig.metadata.name}}"
+              project-name="{{row.buildConfig.metadata.namespace}}"
+              kind="{{row.buildConfig.kind}}"
+              stay-on-current-page=true></delete-link>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="list-pf-expansion collapse" ng-if="row.expanded" ng-class="{ in: row.expanded }">
+    <div class="list-pf-container">
+      <div class="expanded-section no-margin">
+
+      </div>
+    </div>
+  </div>
+
+</div>

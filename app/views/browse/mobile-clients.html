@@ -76,9 +76,13 @@
                 </div>
               </div>
             </uib-tab>
+            <uib-tab ng-if="ctrl.mobileCIEnabled && ctrl.mobileClient.spec.clientType === 'android'" active="selectedTab.builds">
+              <uib-tab-heading>Builds</uib-tab-heading>
+                <mobile-client-builds-list mobile-client="ctrl.mobileClient"></mobile-client-builds-list>
+            </uib-tab>
             <uib-tab active="selectedTab.mobileServices" class="mobile-services">
               <uib-tab-heading>Mobile Services</uib-tab-heading>
-                  <mobile-service-instance-list></mobile-service-instance-list>
+                <mobile-service-instance-list></mobile-service-instance-list>
             </uib-tab>
           </uib-tabset>
         </div>

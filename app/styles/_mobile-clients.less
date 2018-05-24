@@ -14,6 +14,26 @@
   .note {
     text-align: center;
   }
+
+  .mobile-builds {
+    .list-pf-content {
+      .list-row-longname {
+        display: inline-block;
+        height: 26px;
+        font-size: 16px;
+        line-height: 26px;
+      }
+      .status-icon {;
+        font-size: 19px;
+        &.Complete {
+          color: @build-pipeline-success-color;
+        }
+        &.Failed{
+          color: @build-pipeline-failed-color;
+        }
+      }
+    }
+  }
 }
 
 .overview {
