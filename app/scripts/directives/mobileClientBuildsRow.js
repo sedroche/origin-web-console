@@ -59,6 +59,10 @@
       BuildsService.deleteBuild(row.buildConfig);
     };
 
+    row.toggleDownloadUrl = function() {
+      row.downloadPanelExpanded = !row.downloadPanelExpanded;
+    };
+
     row.$onDestroy = function(changes) {
       DataService.unwatchAll(watches);
     }

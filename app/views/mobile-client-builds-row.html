@@ -1,4 +1,4 @@
-<div class="list-pf-item provisioned-service" ng-class="{ active: row.expanded }">
+<div class="list-pf-item" ng-class="{ active: row.expanded }">
   <div class="list-pf-container" ng-click="row.toggleExpand($event)">
     <div class="list-pf-chevron">
       <div ng-include src=" 'views/overview/_list-row-chevron.html' " class="list-pf-content"></div>
@@ -45,7 +45,28 @@
   <div class="list-pf-expansion collapse" ng-if="row.expanded" ng-class="{ in: row.expanded }">
     <div class="list-pf-container">
       <div class="expanded-section no-margin">
-
+        <div class="row">
+          <div class="col-md-12">
+            <div class="component-label section-label">Builds</div>
+            <div class="latest-mobile-build" ng-class="{'display-download-options': row.downloadPanelExpanded}">
+              <div class="latest-build-pipeline col-md-9">
+                <build-pipeline build=row.latestBuild></build-pipeline>
+              </div>
+              <div class="latest-download-trigger col-md-3">
+                <button role="button" class="btn btn-primary btn-lg" ng-click="row.toggleDownloadUrl()">Download</button>
+              </div>
+              <div ng-if="row.downloadPanelExpanded" class="latest-build-download col-md-12">
+                <div class="col-md-6 build-url">
+                  <p>Download from URL:</p>
+                  <a href="">https://download/url</a>
+                </div>
+                <div class="col-md-6 build-qrcode">
+                  <span>Or scan QR code.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
