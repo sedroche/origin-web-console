@@ -1,0 +1,13 @@
+<div ng-if="$ctrl.showPanel" class="mobile-client-download-url col-md-12">
+  <div ng-if="!($ctrl.mobileBuild | annotation : $ctrl.BUILD_DOWNLOAD_ANNOTATION)" class="spinner spinner-lg" aria-hidden="true"></div>
+  <div ng-if="$ctrl.mobileBuild | annotation : $ctrl.BUILD_DOWNLOAD_ANNOTATION">
+    <div class="col-md-6">
+      <p>Download from URL:</p>
+      <a ng-href="{{$ctrl.mobileBuild | annotation : $ctrl.BUILD_DOWNLOAD_ANNOTATION}}">{{$ctrl.mobileBuild | annotation : $ctrl.BUILD_DOWNLOAD_ANNOTATION}}</a>
+    </div>
+    <div class="col-md-6">
+      <span> Or scan QR code: </span>
+      <jq-qr-code content="$ctrl.mobileBuild | annotation : $ctrl.BUILD_DOWNLOAD_ANNOTATION" />
+    </div>
+  </div>
+</div>

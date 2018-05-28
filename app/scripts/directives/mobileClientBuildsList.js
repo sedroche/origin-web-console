@@ -41,7 +41,7 @@
     };
 
     ctrl.goToCreateClientBuild = function() {
-      $location.url('project/' + ctrl.mobileClient.metadata.namespace+ '/create-client-build/' + ctrl.mobileClient.metadata.name);
+      $location.url('project/' + ctrl.mobileClient.metadata.namespace + '/create-client-build/' + ctrl.mobileClient.metadata.name);
     };
 
     ctrl.$onDestroy = function(){

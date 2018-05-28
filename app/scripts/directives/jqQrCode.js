@@ -10,7 +10,7 @@ angular.module('openshiftConsole').directive('jqQrCode', function () {
     scope: {
       content: '<?'
     },
-    link: function ($scope, element, attrs) {
+    link: function ($scope, element) {
       var qrCodeContainer = $('.qr-code-container', element);
       // create new qrcode
       qrCodeContainer.qrcode({

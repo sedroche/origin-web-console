@@ -35,6 +35,7 @@
     row.$onChanges = function(changes) {
       var apiObjectChanges = changes.apiObject && changes.apiObject.currentValue;
       var buildConfigChanges = changes.buildConfig && changes.buildConfig.currentValue;
+
       if (apiObjectChanges && !row.context) {
         row.context = {namespace:_.get(row, 'apiObject.metadata.namespace')};
       }
@@ -45,8 +46,9 @@
           var _builds = _.filter(builds.by('metadata.name'), function(build) {
             return _.get(build, 'metadata.labels.buildconfig') === _.get(row, 'buildConfig.metadata.name');
           });
-          row.sortedBuilds = BuildsService.sortBuilds(_builds, true);
-          row.latestBuild = row.sortedBuilds[0];
+          var sortedBuilds = BuildsService.sortBuilds(_builds, true);
+          row.latestBuild = sortedBuilds[0];
+          row.historyBuilds = _.tail(sortedBuilds);
         }));
       }
     };
@@ -59,8 +61,16 @@
       BuildsService.deleteBuild(row.buildConfig);
     };
 
-    row.$onDestroy = function(changes) {
+    row.toggleBuildHistory = function() {
+      row.historyExpanded = !row.historyExpanded;
+    };
+
+    row.toggleLatestDownloadUrl = function() {
+      row.latestDownloadPanelExpanded = !row.latestDownloadPanelExpanded;
+    };
+
+    row.$onDestroy = function() {
       DataService.unwatchAll(watches);
-    }
+    };
   }
 })();
