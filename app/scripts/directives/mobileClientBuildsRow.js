@@ -42,14 +42,14 @@
       if (buildConfigChanges && row.context && !row.watchSet) {
         row.watchSet = true;
         watches.push(DataService.watch(buildsVersion, row.context, function(builds) {
-          var builds = _.filter(builds.by('metadata.name'), function(build) {
+          var _builds = _.filter(builds.by('metadata.name'), function(build) {
             return _.get(build, 'metadata.labels.buildconfig') === _.get(row, 'buildConfig.metadata.name');
           });
-          row.sortedBuilds = BuildsService.sortBuilds(builds, true);
+          row.sortedBuilds = BuildsService.sortBuilds(_builds, true);
           row.latestBuild = row.sortedBuilds[0];
         }));
       }
-    }
+    };
 
     row.startBuild = function() {
       BuildsService.startBuild(row.buildConfig);

@@ -19,7 +19,9 @@
           </span>
         </span>
         <span ng-bind-html="row.buildConfig.metadata.name" class="list-row-longname"></span>
-        <button class="btn btn-default pull-right" ng-if="row.buildConfigsInstantiateVersion | canI : 'create'" ng-click="row.startBuild()">Start Build</button>
+        <button class="btn btn-default pull-right" ng-if="row.buildConfigsInstantiateVersion | canI : 'create'"
+                ng-click="row.startBuild()">Start Build
+        </button>
       </div>
     </div>
 
@@ -45,7 +47,35 @@
   <div class="list-pf-expansion collapse" ng-if="row.expanded" ng-class="{ in: row.expanded }">
     <div class="list-pf-container">
       <div class="expanded-section no-margin">
-        <jq-qr-code content="'https://testing.content.com'"/>
+        <div class="component-label section-label">BUILD CONFIG</div>
+        <div class="row">
+          <div class="col-md-2">
+            <b>Repo Url</b>
+          </div>
+          <div class="col-md-4">
+            {{row.buildConfig.spec.source.git.uri}}
+          </div>
+          <div class="col-md-2">
+            <b>Branch</b>
+          </div>
+          <div class="col-md-4">
+            {{row.buildConfig.spec.source.git.ref}}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-2">
+            <b>Jenkins Job Name</b>
+          </div>
+          <div class="col-md-4">
+            {{row.buildConfig.metadata.name}}
+          </div>
+          <div class="col-md-2">
+            <b>Jenkinsfile Path</b>
+          </div>
+          <div class="col-md-4">
+            {{row.buildConfig.spec.strategy.jenkinsPipelineStrategy.jenkinsfilePath}}
+          </div>
+        </div>
       </div>
     </div>
   </div>
