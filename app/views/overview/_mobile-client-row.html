@@ -51,7 +51,7 @@
       </div>
       <div class="expanded-section" ng-if="(row.services | size)">
         <div class="row">
-          <div ng-if="(row.services | size)" class="col-md-8">
+          <div ng-if="(row.services | size)" class="col-md-12">
             <div ng-if="!row.alertDismissed && (row.servicesNotBoundCount > 0)" class="alert alert-info alert-dismissable">
               <button type="button" class="close" data-dismiss="alert" aria-hidden="true" ng-click="row.alertDismissed = true">
                 <span class="pficon pficon-close"></span>
@@ -60,6 +60,8 @@
               {{row.servicesNotBoundCount}} mobile services are not bound to this client.
               <a href="" ng-href="{{ row.navigateToMobileTab('mobileServices') }}">Bind them to use with this client.</a>
             </div>
+          </div>
+          <div ng-if="(row.services | size)" class="col-md-6">
             <div>
               <div class="component-label section-label">Mobile Services</div>
               <div class="services-chart">
@@ -68,7 +70,7 @@
               <a href="" ng-href="{{ row.navigateToMobileTab('mobileServices') }}">View All Mobile Services</a>
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <mobile-client-config mobile-client="row.apiObject"></mobile-client-config>
           </div>
         </div>
